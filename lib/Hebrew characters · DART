@@ -1,0 +1,261 @@
+// lib/constants/hebrew_characters.dart
+// Character definitions for Hebrew Alphabet Learning App
+
+enum CharacterStage { baby, kid, adult }
+
+class HebrewCharacter {
+  final String id;
+  final String letter; // Hebrew letter (א, ב, ג, etc.)
+  final String name; // Hebrew name (אַרְיֵה, דּוּב, etc.)
+  final String animal; // English animal name
+  final String emoji; // Character emoji
+  final String color; // Hex color for UI
+  final String description; // Short description
+  
+  HebrewCharacter({
+    required this.id,
+    required this.letter,
+    required this.name,
+    required this.animal,
+    required this.emoji,
+    required this.color,
+    required this.description,
+  });
+}
+
+// All 22 Hebrew letters with animal associations
+const List<HebrewCharacter> hebrewCharacters = [
+  // Aleph-Het (א-ח) - First group
+  HebrewCharacter(
+    id: 'aleph',
+    letter: 'א',
+    name: 'אַרְיֵה',
+    animal: 'Lion',
+    emoji: '🦁',
+    color: '#F5D5A8',
+    description: 'Strong and courageous',
+  ),
+  HebrewCharacter(
+    id: 'bet',
+    letter: 'ב',
+    name: 'דּוּב',
+    animal: 'Bear',
+    emoji: '🐻',
+    color: '#8B6F47',
+    description: 'Powerful and wise',
+  ),
+  HebrewCharacter(
+    id: 'gimel',
+    letter: 'ג',
+    name: 'גָּמָל',
+    animal: 'Camel',
+    emoji: '🐪',
+    color: '#D4A574',
+    description: 'Journey seeker',
+  ),
+  HebrewCharacter(
+    id: 'dalet',
+    letter: 'ד',
+    name: 'דָּג',
+    animal: 'Fish',
+    emoji: '🐟',
+    color: '#4A90E2',
+    description: 'Graceful swimmer',
+  ),
+  HebrewCharacter(
+    id: 'he',
+    letter: 'ה',
+    name: 'הִיפּוּ',
+    animal: 'Hippo',
+    emoji: '🦛',
+    color: '#E8A0BF',
+    description: 'Gentle giant',
+  ),
+  HebrewCharacter(
+    id: 'vav',
+    letter: 'ו',
+    name: 'וַרְוָר',
+    animal: 'Worm',
+    emoji: '🐛',
+    color: '#90EE90',
+    description: 'Small but mighty',
+  ),
+  HebrewCharacter(
+    id: 'zayin',
+    letter: 'ז',
+    name: 'זְבוּב',
+    animal: 'Bee',
+    emoji: '🐝',
+    color: '#FFD700',
+    description: 'Busy and sweet',
+  ),
+  HebrewCharacter(
+    id: 'het',
+    letter: 'ח',
+    name: 'חִטָּה',
+    animal: 'Butterfly',
+    emoji: '🦋',
+    color: '#FF69B4',
+    description: 'Beautiful transformer',
+  ),
+  
+  // Tet-Tzadi (ט-צ) - Second group
+  HebrewCharacter(
+    id: 'tet',
+    letter: 'ט',
+    name: 'טִיגְרִיס',
+    animal: 'Tiger',
+    emoji: '🐯',
+    color: '#FFA500',
+    description: 'Striped and swift',
+  ),
+  HebrewCharacter(
+    id: 'yod',
+    letter: 'י',
+    name: 'יוֹנָה',
+    animal: 'Dove',
+    emoji: '🕊️',
+    color: '#D3D3D3',
+    description: 'Peaceful messenger',
+  ),
+  HebrewCharacter(
+    id: 'kaf',
+    letter: 'כ',
+    name: 'כַּלְבּ',
+    animal: 'Dog',
+    emoji: '🐕',
+    color: '#A0522D',
+    description: 'Loyal friend',
+  ),
+  HebrewCharacter(
+    id: 'lamed',
+    letter: 'ל',
+    name: 'לִבְיָה',
+    animal: 'Leopard',
+    emoji: '🐆',
+    color: '#FFCC99',
+    description: 'Graceful hunter',
+  ),
+  HebrewCharacter(
+    id: 'mem',
+    letter: 'מ',
+    name: 'מַיִם',
+    animal: 'Whale',
+    emoji: '🐋',
+    color: '#00BFFF',
+    description: 'Ocean explorer',
+  ),
+  HebrewCharacter(
+    id: 'nun',
+    letter: 'נ',
+    name: 'נוֹץ',
+    animal: 'Ostrich',
+    emoji: '🦅',
+    color: '#8B4513',
+    description: 'Tall and fast',
+  ),
+  HebrewCharacter(
+    id: 'samekh',
+    letter: 'ס',
+    name: 'סָמוּר',
+    animal: 'Snake',
+    emoji: '🐍',
+    color: '#00AA00',
+    description: 'Slithering mystery',
+  ),
+  HebrewCharacter(
+    id: 'ayin',
+    letter: 'ע',
+    name: 'עַיִל',
+    animal: 'Elk',
+    emoji: '🦌',
+    color: '#8B7355',
+    description: 'Majestic wanderer',
+  ),
+  
+  // Pe-Tav (פ-ת) - Final group
+  HebrewCharacter(
+    id: 'pe',
+    letter: 'פ',
+    name: 'פִּיגְיוֹן',
+    animal: 'Pigeon',
+    emoji: '🕰️',
+    color: '#696969',
+    description: 'Clever builder',
+  ),
+  HebrewCharacter(
+    id: 'tzadi',
+    letter: 'צ',
+    name: 'צָרִיף',
+    animal: 'Lizard',
+    emoji: '🦎',
+    color: '#9ACD32',
+    description: 'Sun lover',
+  ),
+  HebrewCharacter(
+    id: 'kof',
+    letter: 'ק',
+    name: 'קוֹף',
+    animal: 'Monkey',
+    emoji: '🐵',
+    color: '#CD853F',
+    description: 'Playful jester',
+  ),
+  HebrewCharacter(
+    id: 'resh',
+    letter: 'ר',
+    name: 'רַעַם',
+    animal: 'Thunder Bird',
+    emoji: '🦅',
+    color: '#4169E1',
+    description: 'Powerful voice',
+  ),
+  HebrewCharacter(
+    id: 'shin',
+    letter: 'ש',
+    name: 'שׁוּנִיָּה',
+    animal: 'Hedgehog',
+    emoji: '🦔',
+    color: '#DAA520',
+    description: 'Prickly protector',
+  ),
+  HebrewCharacter(
+    id: 'tav',
+    letter: 'ת',
+    name: 'תַּרְנְגוֹל',
+    animal: 'Rooster',
+    emoji: '🐓',
+    color: '#FF6347',
+    description: 'Morning herald',
+  ),
+];
+
+// Get character by ID
+HebrewCharacter? getCharacterById(String id) {
+  try {
+    return hebrewCharacters.firstWhere((char) => char.id == id);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Get character by letter
+HebrewCharacter? getCharacterByLetter(String letter) {
+  try {
+    return hebrewCharacters.firstWhere((char) => char.letter == letter);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Get all characters in a specific stage (by index/difficulty)
+List<HebrewCharacter> getCharactersByLevel(int level) {
+  // Level 1: First 5 characters (easy)
+  // Level 2: Characters 6-11 (medium)
+  // Level 3: Characters 12-17 (harder)
+  // Level 4: Characters 18-22 (hardest)
+  
+  int startIndex = (level - 1) * 5;
+  int endIndex = (startIndex + 5).clamp(0, hebrewCharacters.length);
+  return hebrewCharacters.sublist(startIndex, endIndex);
+}
