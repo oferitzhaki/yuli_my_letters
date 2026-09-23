@@ -1,105 +1,83 @@
 #!/usr/bin/env python3
 """
-Generate Hebrew letter pronunciation audio files using Google Cloud TTS
-Place google_credentials.json in the same directory as this script
+Generate Hebrew audio with Google Cloud TTS:
+  assets/audio/<id>.mp3         - letter names (אָלֶף, בֵּית ...)
+  assets/audio/animal_<id>.mp3  - animal names (אַרְיֵה, בַּרְוָז ...)
+Existing files are skipped, so it is safe to run again.
+Needs google_credentials.json next to this script.
 """
 
 import os
-import json
 from google.cloud import texttospeech
 from google.oauth2 import service_account
 
-# Hebrew letters and their names
-HEBREW_LETTERS = [
-    ("alef", "אַלֶף"),
-    ("bet", "בֵּית"),
-    ("gimel", "גִּימֶל"),
-    ("dalet", "דָּלֶת"),
-    ("he", "הֵא"),
-    ("vav", "וָו"),
-    ("zayin", "זַיִן"),
-    ("het", "חֵת"),
-    ("tet", "טֵת"),
-    ("yod", "יוֹד"),
-    ("kaf", "כַּף"),
-    ("lamed", "לָמֶד"),
-    ("mem", "מֵם"),
-    ("nun", "נוּן"),
-    ("samekh", "סָמֶךְ"),
-    ("ayin", "עַיִן"),
-    ("pe", "פֵּא"),
-    ("tsadi", "צָדִי"),
-    ("qof", "קוֹף"),
-    ("resh", "רֵישׁ"),
-    ("shin", "שִׁין"),
-    ("tav", "תָּו"),
+LETTERS = [
+    ("alef", "אָלֶף"), ("bet", "בֵּית"), ("gimel", "גִּימֶל"), ("dalet", "דָּלֶת"),
+    ("he", "הֵא"), ("vav", "וָו"), ("zayin", "זַיִן"), ("het", "חֵית"),
+    ("tet", "טֵית"), ("yod", "יוֹד"), ("kaf", "כַּף"), ("lamed", "לָמֶד"),
+    ("mem", "מֵם"), ("nun", "נוּן"), ("samekh", "סָמֶךְ"), ("ayin", "עַיִן"),
+    ("pe", "פֵּא"), ("tsadi", "צָדִי"), ("qof", "קוֹף"), ("resh", "רֵישׁ"),
+    ("shin", "שִׁין"), ("tav", "תָּו"),
 ]
 
-def generate_audio_files():
-    """Generate audio files for all Hebrew letters"""
-    
-    # Load credentials
-    credentials_path = "google_credentials.json"
-    if not os.path.exists(credentials_path):
-        print("❌ Error: google_credentials.json not found!")
-        print("   Please download it from Google Cloud Console")
-        return False
-    
-    # Initialize TTS client
+ANIMALS = [
+    ("alef", "אַרְיֵה"), ("bet", "בַּרְוָז"), ("gimel", "גָּמָל"), ("dalet", "דָּג"),
+    ("he", "הִיפּוֹפּוֹטָם"), ("vav", "וַרְוָר"), ("zayin", "זְאֵב"), ("het", "חָתוּל"),
+    ("tet", "טַוָּס"), ("yod", "יוֹנָה"), ("kaf", "כֶּלֶב"), ("lamed", "לְטָאָה"),
+    ("mem", "מֵדוּזָה"), ("nun", "נָמֵר"), ("samekh", "סוּס"), ("ayin", "עַכְבָּר"),
+    ("pe", "פִּיל"), ("tsadi", "צָב"), ("qof", "קוֹף"), ("resh", "רָקוּן"),
+    ("shin", "שׁוּעָל"), ("tav", "תַּרְנְגוֹל"),
+]
+
+OUTPUT_DIR = "assets/audio"
+
+
+def main():
+    if not os.path.exists("google_credentials.json"):
+        print("Error: google_credentials.json not found next to this script")
+        return 1
+
     credentials = service_account.Credentials.from_service_account_file(
-        credentials_path
+        "google_credentials.json"
     )
     client = texttospeech.TextToSpeechClient(credentials=credentials)
-    
-    # Create output directory
-    output_dir = "assets/audio"
-    os.makedirs(output_dir, exist_ok=True)
-    
-    print("🎵 Generating Hebrew letter audio files...")
-    print(f"📁 Output directory: {output_dir}\n")
-    
-    success_count = 0
-    
-    for filename, hebrew_text in HEBREW_LETTERS:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    voice = texttospeech.VoiceSelectionParams(
+        language_code="he-IL",
+        name="he-IL-Wavenet-A",
+    )
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3,
+        speaking_rate=0.8,  # a bit slower for kids
+    )
+
+    jobs = [(f"{i}.mp3", t) for i, t in LETTERS] + \
+           [(f"animal_{i}.mp3", t) for i, t in ANIMALS]
+
+    made = skipped = failed = 0
+    for filename, text in jobs:
+        path = os.path.join(OUTPUT_DIR, filename)
+        if os.path.exists(path):
+            skipped += 1
+            continue
         try:
-            # Prepare TTS request
-            synthesis_input = texttospeech.SynthesisInput(text=hebrew_text)
-            
-            # Voice config - Hebrew
-            voice = texttospeech.VoiceSelectionParams(
-                language_code="he-IL",
-                name="he-IL-Wavenet-A",  # Hebrew female voice
-                ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
-            )
-            
-            # Audio config
-            audio_config = texttospeech.AudioConfig(
-                audio_encoding=texttospeech.AudioEncoding.MP3,
-                pitch=0.0,
-                speaking_rate=0.8,  # Slightly slower for kids
-            )
-            
-            # Generate audio
             response = client.synthesize_speech(
-                input=synthesis_input,
+                input=texttospeech.SynthesisInput(text=text),
                 voice=voice,
                 audio_config=audio_config,
             )
-            
-            # Save to file
-            output_path = os.path.join(output_dir, f"{filename}.mp3")
-            with open(output_path, "wb") as out:
+            with open(path, "wb") as out:
                 out.write(response.audio_content)
-            
-            print(f"✅ {filename:10} → {hebrew_text} ({output_path})")
-            success_count += 1
-            
+            print(f"OK   {filename}")
+            made += 1
         except Exception as e:
-            print(f"❌ {filename:10} → Error: {str(e)}")
-    
-    print(f"\n🎉 Done! Generated {success_count}/{len(HEBREW_LETTERS)} files")
-    return success_count == len(HEBREW_LETTERS)
+            print(f"FAIL {filename}: {e}")
+            failed += 1
+
+    print(f"\nDone: {made} created, {skipped} already existed, {failed} failed")
+    return 1 if failed else 0
+
 
 if __name__ == "__main__":
-    success = generate_audio_files()
-    exit(0 if success else 1)
+    raise SystemExit(main())

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/learn_screen.dart';
+import 'screens/games_menu_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -52,7 +52,7 @@ class HomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const LearnScreen()),
+                      MaterialPageRoute(builder: (_) => const GamesMenuScreen()),
                     );
                   },
                   icon: const Icon(Icons.play_arrow, size: 32),
