@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'screens/learn_screen.dart';
 
 void main() {
@@ -6,192 +7,69 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'My Letters - Yuli',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorSchemeSeed: Colors.deepOrange,
         useMaterial3: true,
       ),
       home: const HomeScreen(),
-      debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
-          ),
-        ),
+      backgroundColor: const Color(0xFFFFF8F0),
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Header
                 const Text(
-                  'My Letters - Yuli 🏠',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  'Welcome Yuli! 👋',
+                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
-
-                // Subtitle
+                const SizedBox(height: 8),
                 const Text(
                   'Learn Hebrew Letters with Friends',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.black54),
                 ),
                 const SizedBox(height: 40),
-
-                // Three animals
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text('🦁', style: TextStyle(fontSize: 80)),
-                    SizedBox(width: 20),
-                    Text('🐻', style: TextStyle(fontSize: 80)),
-                    SizedBox(width: 20),
-                    Text('🐪', style: TextStyle(fontSize: 80)),
-                  ],
-                ),
-                const SizedBox(height: 50),
-
-                // Start Learning Button
-                ElevatedButton(
+                const Text('🦁  🦆  🐪', style: TextStyle(fontSize: 64)),
+                const SizedBox(height: 48),
+                ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const LearnScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const LearnScreen()),
                     );
                   },
+                  icon: const Icon(Icons.play_arrow, size: 32),
+                  label: const Text(
+                    'Start Learning',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC107),
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
-                      vertical: 15,
+                      vertical: 16,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-                  ),
-                  child: const Text(
-                    '▶ Start Learning',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 50),
-
-                // Progress Box
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.lightBlue.shade100,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Your Progress',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Column(
-                            children: const [
-                              Text(
-                                'abc',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                '0/22',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                              Text(
-                                'Letters',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            children: const [
-                              Text(
-                                '⭐',
-                                style: TextStyle(fontSize: 24),
-                              ),
-                              Text(
-                                '0',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.amber,
-                                ),
-                              ),
-                              Text(
-                                'Points',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            children: const [
-                              Text(
-                                '🔥',
-                                style: TextStyle(fontSize: 24),
-                              ),
-                              Text(
-                                '0',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red,
-                                ),
-                              ),
-                              Text(
-                                'Streak',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
                 ),
               ],
