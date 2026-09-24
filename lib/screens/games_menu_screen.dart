@@ -8,6 +8,7 @@ import '../services/progress_service.dart';
 import 'choice_game_screen.dart';
 import 'letter_intro_screen.dart';
 import 'memory_screen.dart';
+import 'trace_screen.dart';
 
 const TextStyle _promptLetter = TextStyle(
   fontSize: 130,
@@ -94,6 +95,14 @@ List<_GameInfo> _games() => [
         subtitle: 'מוצאים זוגות של אות ותמונה',
         color: Colors.purple,
         builder: (_) => const MemoryScreen(),
+      ),
+      _GameInfo(
+        level: 5,
+        emoji: '✏️',
+        title: 'מעקב אחרי האות',
+        subtitle: 'מציירים את האות באצבע',
+        color: Colors.indigo,
+        builder: (_) => const TraceScreen(),
       ),
     ];
 
