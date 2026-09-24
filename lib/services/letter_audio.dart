@@ -1,8 +1,9 @@
 // lib/services/letter_audio.dart
-// Plays letter names (assets/audio/<id>.mp3) and word names
-// (assets/audio/animal_<id>.mp3). Missing files fail silently.
+// All sounds: letter names (<id>.mp3), words (animal_<id>.mp3)
+// and spoken feedback (fb_*.mp3). Missing files fail silently.
 
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -11,33 +12,68 @@ import '../constants/hebrew_characters.dart';
 
 class LetterAudio {
   final AudioPlayer _player = AudioPlayer();
+  final Random _random = Random();
 
-  // Each new request bumps this, so an older "letter then word"
-  // sequence knows it was interrupted and stops.
+  // Every new request bumps this, so an older sequence knows it was
+  // interrupted and stops instead of talking over the new one.
   int _token = 0;
+
+  static const int _praiseCount = 4;
+  static const int _tryAgainCount = 2;
+
+  // ---------- single sounds ----------
 
   Future<void> playLetter(HebrewCharacter c) {
     _token++;
-    return _play(_letterAsset(c));
+    return _play(_letter(c));
   }
 
   Future<void> playAnimal(HebrewCharacter c) {
     _token++;
-    return _play(_wordAsset(c));
+    return _play(_word(c));
   }
 
-  /// "אָלֶף ... אַרְיֵה" - used when meeting a new letter.
-  Future<void> playLetterThenWord(HebrewCharacter c) async {
+  // ---------- sequences (complete when done or interrupted) ----------
+
+  /// "אָלֶף ... אַרְיֵה"
+  Future<bool> playLetterThenWord(HebrewCharacter c) =>
+      _sequence([_letter(c), _word(c)]);
+
+  /// "אָלֶף ... יופי יולי, הצלחת!"
+  Future<bool> playLetterThenPraise(HebrewCharacter c) =>
+      _sequence([_letter(c), _praise()]);
+
+  /// "כמעט! נסי שוב" - returns true if it finished uninterrupted.
+  Future<bool> playTryAgain() => _sequence(
+      ['assets/audio/fb_try_${_random.nextInt(_tryAgainCount) + 1}.mp3']);
+
+  Future<bool> playRoundDone({bool unlocked = false}) => _sequence([
+        'assets/audio/fb_round.mp3',
+        if (unlocked) 'assets/audio/fb_unlock.mp3',
+      ]);
+
+  Future<bool> playIntroDone() =>
+      _sequence(['assets/audio/fb_intro_done.mp3']);
+
+  // ---------- internals ----------
+
+  String _letter(HebrewCharacter c) => 'assets/audio/${c.id}.mp3';
+  String _word(HebrewCharacter c) => 'assets/audio/animal_${c.id}.mp3';
+  String _praise() =>
+      'assets/audio/fb_praise_${_random.nextInt(_praiseCount) + 1}.mp3';
+
+  Future<bool> _sequence(List<String> assets) async {
     final token = ++_token;
-    await _playToEnd(_letterAsset(c));
-    if (token != _token) return;
-    await Future.delayed(const Duration(milliseconds: 350));
-    if (token != _token) return;
-    await _play(_wordAsset(c));
+    for (var i = 0; i < assets.length; i++) {
+      if (i > 0) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (token != _token) return false;
+      }
+      await _playToEnd(assets[i]);
+      if (token != _token) return false;
+    }
+    return true;
   }
-
-  String _letterAsset(HebrewCharacter c) => 'assets/audio/${c.id}.mp3';
-  String _wordAsset(HebrewCharacter c) => 'assets/audio/animal_${c.id}.mp3';
 
   Future<void> _play(String asset) async {
     try {
@@ -56,9 +92,9 @@ class LetterAudio {
       _player.play();
       await _player.processingStateStream
           .firstWhere((s) => s == ProcessingState.completed)
-          .timeout(const Duration(seconds: 4));
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
-      // Timeout or interruption - just continue.
+      // Missing file, timeout or interruption - just carry on.
     }
   }
 

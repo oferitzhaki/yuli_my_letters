@@ -105,18 +105,30 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
         _answeredCorrectly = true;
         _score += widget.pointsPerCorrect;
       });
-      _audio.playLetter(_current);
-      Future.delayed(const Duration(milliseconds: 1800), _nextQuestion);
+      _advanceAfter(_audio.playLetterThenPraise(_current));
     } else {
       if (_wrongPicks.isEmpty) _progress.recordMistake(_current.id);
       setState(() => _wrongPicks.add(option.id));
-      _playPrompt(); // replay as a hint
+      // "Almost! Try again", then the question again as a hint.
+      _audio.playTryAgain().then((finished) {
+        if (finished && mounted && !_answeredCorrectly) _playPrompt();
+      });
     }
+  }
+
+  /// Waits for the praise to finish (and at least a moment), then moves on.
+  Future<void> _advanceAfter(Future<bool> feedback) async {
+    await Future.wait<Object?>([
+      feedback,
+      Future<void>.delayed(const Duration(milliseconds: 1500)),
+    ]);
+    _nextQuestion();
   }
 
   void _nextQuestion() {
     if (!mounted) return;
     if (_questionIndex + 1 >= _roundLetters.length) {
+      _audio.playRoundDone(unlocked: _unlockedThisRound);
       showRoundCompleteDialog(
         context,
         score: _score,

@@ -29,6 +29,19 @@ ANIMALS = [
     ("shin", "שֶׁמֶשׁ"), ("tav", "תַּפּוּחַ"),
 ]
 
+# Spoken feedback. Change the name here and re-run to personalise.
+PHRASES = [
+    ("fb_praise_1", "יוֹפִי יוּלִי, הִצְלַחְתְּ!"),
+    ("fb_praise_2", "כָּל הַכָּבוֹד יוּלִי!"),
+    ("fb_praise_3", "מְצֻיָּן יוּלִי!"),
+    ("fb_praise_4", "אַתְּ אַלּוּפָה, יוּלִי!"),
+    ("fb_try_1", "כִּמְעַט! נַסִּי שׁוּב"),
+    ("fb_try_2", "לֹא נוֹרָא, נַסִּי עוֹד פַּעַם"),
+    ("fb_round", "כָּל הַכָּבוֹד יוּלִי! סִיַּמְתְּ אֶת הַסִּבּוּב!"),
+    ("fb_unlock", "יוּלִי, נִפְתְּחוּ לָךְ אוֹתִיּוֹת חֲדָשׁוֹת!"),
+    ("fb_intro_done", "כָּל הַכָּבוֹד יוּלִי! עַכְשָׁו אֶפְשָׁר לְשַׂחֵק"),
+]
+
 OUTPUT_DIR = "assets/audio"
 
 
@@ -53,7 +66,8 @@ def main():
     )
 
     jobs = [(f"{i}.mp3", t) for i, t in LETTERS] + \
-           [(f"animal_{i}.mp3", t) for i, t in ANIMALS]
+           [(f"animal_{i}.mp3", t) for i, t in ANIMALS] + \
+           [(f"{n}.mp3", t) for n, t in PHRASES]
 
     made = skipped = failed = 0
     for filename, text in jobs:

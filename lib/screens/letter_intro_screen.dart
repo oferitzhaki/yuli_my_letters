@@ -68,6 +68,7 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
   }
 
   void _finish() {
+    _audio.playIntroDone();
     showDialog<void>(
       context: context,
       barrierDismissible: false,

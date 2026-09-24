@@ -84,11 +84,12 @@ class _MemoryScreenState extends State<MemoryScreen> {
         _score += pointsPerPair;
       });
       ProgressService.instance.addStars(pointsPerPair);
-      _audio.playLetter(first.character);
+      _audio.playLetterThenPraise(first.character);
 
       if (_cards.every((c) => c.matched)) {
-        Future.delayed(const Duration(milliseconds: 1200), () {
+        Future.delayed(const Duration(milliseconds: 2800), () {
           if (!mounted) return;
+          _audio.playRoundDone();
           showRoundCompleteDialog(
             context,
             score: _score,
