@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/hebrew_characters.dart';
 import '../services/letter_audio.dart';
+import '../services/progress_service.dart';
 import '../widgets/round_complete_dialog.dart';
 
 typedef CharacterWidgetBuilder = Widget Function(HebrewCharacter c);
@@ -49,6 +50,9 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
   int _questionIndex = 0;
   int _score = 0;
   bool _answeredCorrectly = false;
+  bool _unlockedThisRound = false;
+
+  ProgressService get _progress => ProgressService.instance;
 
   HebrewCharacter get _current => _roundLetters[_questionIndex];
 
@@ -65,16 +69,15 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
   }
 
   void _startRound() {
-    _roundLetters = (List.of(hebrewCharacters)..shuffle(_random))
-        .take(widget.questionsPerRound)
-        .toList();
+    _roundLetters = _progress.pickRoundLetters(widget.questionsPerRound);
+    _unlockedThisRound = false;
     _questionIndex = 0;
     _score = 0;
     _prepareQuestion();
   }
 
   void _prepareQuestion() {
-    final others = hebrewCharacters
+    final others = _progress.playableLetters
         .where((c) => c.id != _current.id)
         .toList()
       ..shuffle(_random);
@@ -93,6 +96,11 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
     if (_answeredCorrectly || _wrongPicks.contains(option.id)) return;
 
     if (option.id == _current.id) {
+      final firstTry = _wrongPicks.isEmpty;
+      _progress.addStars(widget.pointsPerCorrect);
+      if (_progress.recordCorrect(_current.id, firstTry: firstTry)) {
+        _unlockedThisRound = true;
+      }
       setState(() {
         _answeredCorrectly = true;
         _score += widget.pointsPerCorrect;
@@ -100,6 +108,7 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
       _audio.playLetter(_current);
       Future.delayed(const Duration(milliseconds: 1800), _nextQuestion);
     } else {
+      if (_wrongPicks.isEmpty) _progress.recordMistake(_current.id);
       setState(() => _wrongPicks.add(option.id));
       _playPrompt(); // replay as a hint
     }
@@ -111,6 +120,7 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
       showRoundCompleteDialog(
         context,
         score: _score,
+        unlockedNew: _unlockedThisRound,
         onPlayAgain: () => setState(_startRound),
       );
       return;

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/hebrew_characters.dart';
 import '../services/letter_audio.dart';
+import '../services/progress_service.dart';
 import '../widgets/round_complete_dialog.dart';
 
 class _MemoryCard {
@@ -50,7 +51,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
   }
 
   void _newGame() {
-    final letters = (List.of(hebrewCharacters)..shuffle(_random)).take(pairs);
+    final pool = List.of(ProgressService.instance.playableLetters)
+      ..shuffle(_random);
+    final letters = pool.take(pairs);
     _cards = [
       for (final c in letters) ...[_MemoryCard(c, true), _MemoryCard(c, false)],
     ]..shuffle(_random);
@@ -80,6 +83,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
         _open.clear();
         _score += pointsPerPair;
       });
+      ProgressService.instance.addStars(pointsPerPair);
       _audio.playLetter(first.character);
 
       if (_cards.every((c) => c.matched)) {

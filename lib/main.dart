@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'constants/hebrew_characters.dart';
 import 'screens/games_menu_screen.dart';
+import 'services/progress_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ProgressService.instance.load();
   runApp(const MyApp());
 }
 
@@ -12,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My Letters - Yuli',
+      title: 'Yuli Letters',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorSchemeSeed: Colors.deepOrange,
@@ -37,17 +41,33 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               children: [
                 const Text(
-                  'Welcome Yuli! 👋',
-                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+                  'שלום יולי! 👋',
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Learn Hebrew Letters with Friends',
-                  style: TextStyle(fontSize: 18, color: Colors.black54),
+                  'לומדים אותיות עם חברים',
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(fontSize: 20, color: Colors.black54),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
                 const Text('🦁  🦆  🐪', style: TextStyle(fontSize: 64)),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
+                ListenableBuilder(
+                  listenable: ProgressService.instance,
+                  builder: (context, _) {
+                    final p = ProgressService.instance;
+                    return Text(
+                      '⭐ ${p.stars}     🔤 ${p.masteredCount}/${hebrewCharacters.length}',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -57,8 +77,9 @@ class HomeScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.play_arrow, size: 32),
                   label: const Text(
-                    'Start Learning',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    'בואי נשחק!',
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFFC107),
