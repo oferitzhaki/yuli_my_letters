@@ -1,6 +1,6 @@
 {
-    "name": "yuli_my_letters",
-    "short_name": "yuli_my_letters",
+    "name": "Yuli Letters",
+    "short_name": "Yuli Letters",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
@@ -33,3 +33,4 @@
         }
     ]
 }
+
