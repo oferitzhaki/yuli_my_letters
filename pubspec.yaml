@@ -12,29 +12,21 @@ dependencies:
     sdk: flutter
 
   # SVG Support
-  flutter_svg: ^2.0.0
 
   # Local Database
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
 
   # Audio Playback
-  just_audio: ^0.9.30
+  just_audio: ^0.10.6
 
   # State Management
-  riverpod: ^2.3.0
-  flutter_riverpod: ^2.3.0
 
   # UI & Animations
-  animations: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^2.0.0
-  hive_generator: ^2.0.0
-  build_runner: ^2.4.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
@@ -44,3 +36,7 @@ flutter:
   
 
  
+dependency_overrides:
+  path_provider_android: 2.3.1
+  jni_flutter: 1.0.1
+  jni: 1.0.0
