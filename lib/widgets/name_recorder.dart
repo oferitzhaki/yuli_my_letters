@@ -1,15 +1,15 @@
 // lib/widgets/name_recorder.dart
 // Records the child's name in a parent's voice (up to 4 seconds).
-// Works on Android and in the browser (iPhone/iPad via Safari).
+// The microphone audio is collected straight into memory and turned into
+// a small WAV file, so it works the same on Android and in the browser
+// (iPhone/iPad via Safari) without temporary files.
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 import '../services/letter_audio.dart';
@@ -40,14 +40,16 @@ class NameRecorder extends StatefulWidget {
 
 class _NameRecorderState extends State<NameRecorder> {
   static const maxLength = Duration(seconds: 4);
+  static const int _sampleRate = 16000;
 
   final AudioRecorder _recorder = AudioRecorder();
   final LetterAudio _audio = LetterAudio();
+  StreamSubscription<Uint8List>? _stream;
+  final List<int> _pcm = [];
   Timer? _autoStop;
   bool _recording = false;
   String? _url;
   String? _error;
-  AudioEncoder _encoder = AudioEncoder.aacLc;
 
   @override
   void initState() {
@@ -58,20 +60,10 @@ class _NameRecorderState extends State<NameRecorder> {
   @override
   void dispose() {
     _autoStop?.cancel();
+    _stream?.cancel();
     _recorder.dispose();
     _audio.dispose();
     super.dispose();
-  }
-
-  String get _mime {
-    switch (_encoder) {
-      case AudioEncoder.opus:
-        return 'audio/webm';
-      case AudioEncoder.wav:
-        return 'audio/wav';
-      default:
-        return 'audio/mp4';
-    }
   }
 
   Future<void> _start() async {
@@ -81,21 +73,19 @@ class _NameRecorderState extends State<NameRecorder> {
         setState(() => _error = 'צריך לאשר גישה למיקרופון');
         return;
       }
-      for (final e in [AudioEncoder.aacLc, AudioEncoder.opus, AudioEncoder.wav]) {
-        if (await _recorder.isEncoderSupported(e)) {
-          _encoder = e;
-          break;
-        }
+      if (!await _recorder.isEncoderSupported(AudioEncoder.pcm16bits)) {
+        setState(() => _error = 'המכשיר לא תומך בהקלטה');
+        return;
       }
-      var path = '';
-      if (!kIsWeb) {
-        final dir = await getTemporaryDirectory();
-        path = '${dir.path}/name_${DateTime.now().millisecondsSinceEpoch}.m4a';
-      }
-      await _recorder.start(
-        RecordConfig(encoder: _encoder, numChannels: 1),
-        path: path,
+      _pcm.clear();
+      final stream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: _sampleRate,
+          numChannels: 1,
+        ),
       );
+      _stream = stream.listen(_pcm.addAll);
       setState(() => _recording = true);
       _autoStop = Timer(maxLength, _stop);
     } catch (e) {
@@ -108,12 +98,17 @@ class _NameRecorderState extends State<NameRecorder> {
     _autoStop?.cancel();
     if (!_recording) return;
     try {
-      final out = await _recorder.stop();
+      await _recorder.stop();
+      await _stream?.cancel();
+      _stream = null;
       setState(() => _recording = false);
-      if (out == null) return;
-      final bytes = await XFile(out).readAsBytes();
-      if (bytes.isEmpty) return;
-      final recorded = RecordedName(bytes, _mime);
+
+      // Less than a quarter of a second = nothing was really said.
+      if (_pcm.length < _sampleRate ~/ 2) {
+        setState(() => _error = 'ההקלטה קצרה מדי, נסו שוב');
+        return;
+      }
+      final recorded = RecordedName(_toWav(_pcm), 'audio/wav');
       setState(() => _url = recorded.dataUrl);
       widget.onRecorded(recorded);
       _audio.playUrl(recorded.dataUrl);
@@ -124,6 +119,35 @@ class _NameRecorderState extends State<NameRecorder> {
       });
       debugPrint('Record stop failed: $e');
     }
+  }
+
+  /// Wraps raw 16-bit mono samples in a standard WAV header.
+  Uint8List _toWav(List<int> pcm) {
+    final header = ByteData(44);
+    void text(int offset, String value) {
+      for (var i = 0; i < value.length; i++) {
+        header.setUint8(offset + i, value.codeUnitAt(i));
+      }
+    }
+
+    text(0, 'RIFF');
+    header.setUint32(4, 36 + pcm.length, Endian.little);
+    text(8, 'WAVE');
+    text(12, 'fmt ');
+    header.setUint32(16, 16, Endian.little); // format chunk size
+    header.setUint16(20, 1, Endian.little); // PCM
+    header.setUint16(22, 1, Endian.little); // mono
+    header.setUint32(24, _sampleRate, Endian.little);
+    header.setUint32(28, _sampleRate * 2, Endian.little); // bytes per second
+    header.setUint16(32, 2, Endian.little); // bytes per sample
+    header.setUint16(34, 16, Endian.little); // bits per sample
+    text(36, 'data');
+    header.setUint32(40, pcm.length, Endian.little);
+
+    final out = Uint8List(44 + pcm.length);
+    out.setRange(0, 44, header.buffer.asUint8List());
+    out.setRange(44, out.length, pcm);
+    return out;
   }
 
   @override

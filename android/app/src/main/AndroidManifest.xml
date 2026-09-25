@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Yuli Letters"
         android:name="${applicationName}"
@@ -43,4 +44,5 @@
         </intent>
     </queries>
 </manifest>
+
 
