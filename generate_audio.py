@@ -51,6 +51,31 @@ PHRASES = [
     ("fb_write_m", "כְּתֹב אֶת הָאוֹת"),
 ]
 
+# ---------- English ABC ----------
+# Letter names use SSML so "A" is read as the letter ("ay"), not a word.
+EN_LETTERS = [(f"en_{c.lower()}", c) for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+EN_WORDS = [
+    ("en_a", "Apple"), ("en_b", "Ball"), ("en_c", "Cat"), ("en_d", "Dog"),
+    ("en_e", "Egg"), ("en_f", "Fish"), ("en_g", "Grapes"), ("en_h", "Hat"),
+    ("en_i", "Ice cream"), ("en_j", "Juice"), ("en_k", "Kite"), ("en_l", "Lion"),
+    ("en_m", "Moon"), ("en_n", "Nose"), ("en_o", "Orange"), ("en_p", "Pig"),
+    ("en_q", "Queen"), ("en_r", "Rabbit"), ("en_s", "Sun"), ("en_t", "Tree"),
+    ("en_u", "Umbrella"), ("en_v", "Van"), ("en_w", "Watermelon"),
+    ("en_x", "X-ray"), ("en_y", "Yo-yo"), ("en_z", "Zebra"),
+]
+EN_PHRASES = [
+    ("fb_en_praise_1", "Great job!"),
+    ("fb_en_praise_2", "Well done!"),
+    ("fb_en_praise_3", "Awesome!"),
+    ("fb_en_praise_4", "You're a star!"),
+    ("fb_en_try_1", "Almost! Try again."),
+    ("fb_en_try_2", "Oops! Try one more time."),
+    ("fb_en_round", "Great job! You finished the round!"),
+    ("fb_en_unlock", "New letters are waiting for you!"),
+    ("fb_en_intro_done", "Well done! Now let's play!"),
+    ("fb_en_write", "Write the letter"),
+]
+
 OUTPUT_DIR = "assets/audio"
 
 
@@ -65,29 +90,38 @@ def main():
     client = texttospeech.TextToSpeechClient(credentials=credentials)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    voice = texttospeech.VoiceSelectionParams(
-        language_code="he-IL",
-        name="he-IL-Wavenet-A",
-    )
+    voices = {
+        "he": texttospeech.VoiceSelectionParams(
+            language_code="he-IL", name="he-IL-Wavenet-A"),
+        "en": texttospeech.VoiceSelectionParams(
+            language_code="en-US", name="en-US-Wavenet-F"),
+    }
     # Letters and words a bit slower for clarity; feedback at normal pace
     # so praise comes quickly.
     LEARN_RATE = 0.8
     FEEDBACK_RATE = 1.05
 
-    jobs = [(f"{i}.mp3", t, LEARN_RATE) for i, t in LETTERS] + \
-           [(f"animal_{i}.mp3", t, LEARN_RATE) for i, t in ANIMALS] + \
-           [(f"{n}.mp3", t, FEEDBACK_RATE) for n, t in PHRASES]
+    # (file, text, speaking rate, language, text is SSML?)
+    jobs = [(f"{i}.mp3", t, LEARN_RATE, "he", False) for i, t in LETTERS] + \
+           [(f"animal_{i}.mp3", t, LEARN_RATE, "he", False) for i, t in ANIMALS] + \
+           [(f"{n}.mp3", t, FEEDBACK_RATE, "he", False) for n, t in PHRASES] + \
+           [(f"{i}.mp3",
+             f'<speak><say-as interpret-as="characters">{t}</say-as></speak>',
+             LEARN_RATE, "en", True) for i, t in EN_LETTERS] + \
+           [(f"animal_{i}.mp3", t, LEARN_RATE, "en", False) for i, t in EN_WORDS] + \
+           [(f"{n}.mp3", t, FEEDBACK_RATE, "en", False) for n, t in EN_PHRASES]
 
     made = skipped = failed = 0
-    for filename, text, rate in jobs:
+    for filename, text, rate, lang, is_ssml in jobs:
         path = os.path.join(OUTPUT_DIR, filename)
         if os.path.exists(path):
             skipped += 1
             continue
         try:
             response = client.synthesize_speech(
-                input=texttospeech.SynthesisInput(text=text),
-                voice=voice,
+                input=(texttospeech.SynthesisInput(ssml=text) if is_ssml
+                       else texttospeech.SynthesisInput(text=text)),
+                voice=voices[lang],
                 audio_config=texttospeech.AudioConfig(
                     audio_encoding=texttospeech.AudioEncoding.MP3,
                     speaking_rate=rate,
