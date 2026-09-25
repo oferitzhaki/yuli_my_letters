@@ -30,7 +30,12 @@ class MemoryScreen extends StatefulWidget {
 class _MemoryScreenState extends State<MemoryScreen> {
   // Difficulty: name and number of pairs. "אלופה" = as many as she can
   // get (limited by the letters she has already met, up to 12 pairs).
-  static const _levels = [('קל', 4), ('בינוני', 6), ('קשה', 8), ('אלופה', 12)];
+  static const _levels = [
+    ('קל', 'Easy', 4),
+    ('בינוני', 'Medium', 6),
+    ('קשה', 'Hard', 8),
+    ('אלופה', 'Champion', 12),
+  ];
   int _level = 3; // start at the hardest available
   static const int pointsPerPair = 5;
 
@@ -57,7 +62,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
   void _newGame() {
     final pool = List.of(ProgressService.instance.playableLetters)
       ..shuffle(_random);
-    final pairs = min(_levels[_level].$2, pool.length);
+    final pairs = min(_levels[_level].$3, pool.length);
     final letters = pool.take(pairs);
     _cards = [
       for (final c in letters) ...[_MemoryCard(c, true), _MemoryCard(c, false)],
@@ -119,13 +124,13 @@ class _MemoryScreenState extends State<MemoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFF3E5F5),
         appBar: AppBar(
           backgroundColor: Colors.purple,
           foregroundColor: Colors.white,
-          title: const Text('משחק זיכרון'),
+          title: Text(tr('משחק זיכרון', 'Memory Game')),
           actions: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -188,7 +193,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
   }
 
   String _levelName(int i) =>
-      i == _levels.length - 1 ? g('אלופה', 'אלוף') : _levels[i].$1;
+      i == _levels.length - 1
+          ? tr(g('אלופה', 'אלוף'), 'Champion')
+          : tr(_levels[i].$1, _levels[i].$2);
 
   Widget _buildLevelPicker() {
     final available = ProgressService.instance.playableLetters.length;
@@ -200,11 +207,11 @@ class _MemoryScreenState extends State<MemoryScreen> {
       children: [
         for (var i = 0; i < _levels.length; i++)
           Builder(builder: (context) {
-            final enabled = i == lastLevel || _levels[i].$2 <= available;
-            final pairs = min(_levels[i].$2, available);
+            final enabled = i == lastLevel || _levels[i].$3 <= available;
+            final pairs = min(_levels[i].$3, available);
             return ChoiceChip(
               label: Text(
-                enabled ? '${_levelName(i)} · $pairs זוגות' : '${_levelName(i)} 🔒',
+                enabled ? '${_levelName(i)} · $pairs ${tr('זוגות', 'pairs')}' : '${_levelName(i)} 🔒',
                 style: const TextStyle(fontSize: 16),
               ),
               selected: _level == i,

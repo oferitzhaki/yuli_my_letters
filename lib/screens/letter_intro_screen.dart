@@ -74,15 +74,17 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: appDirection,
         child: AlertDialog(
           title: Text(
-            '🎉 כל הכבוד ${ProfileService.instance.name}!',
+            tr('🎉 כל הכבוד ${ProfileService.instance.name}!',
+              '🎉 Great job, ${ProfileService.instance.name}!'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 28),
           ),
           content: Text(
-            'הכרת ${_letters.length} אותיות.\nעכשיו אפשר לשחק איתן!',
+            tr('הכרת ${_letters.length} אותיות.\nעכשיו אפשר לשחק איתן!',
+                "You met ${_letters.length} letters.\nNow let's play with them!"),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 22),
           ),
@@ -93,7 +95,8 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context).pop();
               },
-              child: const Text('למשחקים 🎮', style: TextStyle(fontSize: 20)),
+              child: Text(tr('למשחקים 🎮', 'To the games 🎮'),
+                  style: const TextStyle(fontSize: 20)),
             ),
           ],
         ),
@@ -104,14 +107,14 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFE8F5E9),
         appBar: AppBar(
           backgroundColor: Colors.green,
           foregroundColor: Colors.white,
           title: Text(
-            '${g('הכירי', 'הכר')} את האותיות · ${_index + 1}/${_letters.length}',
+            '${tr('${g('הכירי', 'הכר')} את האותיות', 'Meet the Letters')} · ${_index + 1}/${_letters.length}',
           ),
         ),
         body: SafeArea(
@@ -197,7 +200,7 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                         onPressed: () => _audio.playLetterThenWord(_current),
                         icon: const Icon(Icons.volume_up, size: 28),
                         label: Text(
-                          g('שמעי שוב', 'שמע שוב'),
+                          tr(g('שמעי שוב', 'שמע שוב'), 'Listen again'),
                           style: TextStyle(fontSize: 18),
                         ),
                         style: ElevatedButton.styleFrom(
@@ -226,8 +229,8 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                                   vertical: 14,
                                 ),
                               ),
-                              child: const Text(
-                                'הקודמת',
+                              child: Text(
+                                tr('הקודמת', 'Back'),
                                 style: TextStyle(fontSize: 18),
                               ),
                             ),
@@ -241,7 +244,7 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                               size: 28,
                             ),
                             label: Text(
-                              _isLast ? 'סיימתי!' : 'הבאה',
+                              _isLast ? tr('סיימתי!', 'Done!') : tr('הבאה', 'Next'),
                               style: const TextStyle(fontSize: 22),
                             ),
                             style: FilledButton.styleFrom(

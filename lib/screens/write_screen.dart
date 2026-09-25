@@ -53,7 +53,7 @@ class _WriteScreenState extends State<WriteScreen> {
   @override
   void initState() {
     super.initState();
-    _recognizer.prepare().then((_) {
+    _recognizer.prepare(activeLetters).then((_) {
       if (mounted) setState(() => _ready = true);
     });
     _startRound();
@@ -137,12 +137,13 @@ class _WriteScreenState extends State<WriteScreen> {
 
     if (_inkLength() < _side * 0.25) {
       if (!quietIfWrong) {
-        setState(() => _message = g('נסי לכתוב אות גדולה יותר 🙂', 'נסה לכתוב אות גדולה יותר 🙂'));
+        setState(() => _message = tr(g('נסי לכתוב אות גדולה יותר 🙂', 'נסה לכתוב אות גדולה יותר 🙂'),
+            'Try writing a bigger letter 🙂'));
       }
       return;
     }
 
-    final ranked = _recognizer.rank(_strokes);
+    final ranked = _recognizer.rank(_strokes, activeLetters);
     final position = ranked.indexWhere((r) => r.id == _current.id);
     final success = position >= 0 &&
         position < topMatches &&
@@ -173,8 +174,10 @@ class _WriteScreenState extends State<WriteScreen> {
       _hadFailure = true;
       _showHint = true;
       _strokes.clear();
-      _message = g('כמעט! הנה האות, נסי לכתוב אותה שוב',
-          'כמעט! הנה האות, נסה לכתוב אותה שוב');
+      _message = tr(
+          g('כמעט! הנה האות, נסי לכתוב אותה שוב',
+              'כמעט! הנה האות, נסה לכתוב אותה שוב'),
+          "Almost! Here's the letter, write it again");
     });
     _audio.playTryAgain().then((finished) {
       if (finished && mounted && !_done) _audio.playLetter(_current);
@@ -207,17 +210,20 @@ class _WriteScreenState extends State<WriteScreen> {
   @override
   Widget build(BuildContext context) {
     final text = _done
-        ? '🎉 נכון! ${_current.letter}'
-        : _message ?? g('כתבי את האות ששמעת ✍️', 'כתוב את האות ששמעת ✍️');
+        ? tr('🎉 נכון! ${_current.letter}', '🎉 Correct! ${_current.letter}')
+        : _message ?? tr(g('כתבי את האות ששמעת ✍️', 'כתוב את האות ששמעת ✍️'),
+            'Write the letter you heard ✍️');
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFFCE4EC),
         appBar: AppBar(
           backgroundColor: Colors.pink,
           foregroundColor: Colors.white,
-          title: Text('כתיבה חופשית · ${_index + 1}/${_roundLetters.length}'),
+          title: Text(
+            '${tr('כתיבה חופשית', 'Free Writing')} · ${_index + 1}/${_roundLetters.length}',
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -299,7 +305,7 @@ class _WriteScreenState extends State<WriteScreen> {
                           onPressed: _done || !_ready ? null : _check,
                           icon: const Icon(Icons.check, size: 26),
                           label: Text(
-                            _ready ? g('בדקי', 'בדוק') : 'מכין...',
+                            _ready ? tr(g('בדקי', 'בדוק'), 'Check') : tr('מכין...', 'Loading...'),
                             style: const TextStyle(fontSize: 20),
                           ),
                           style: FilledButton.styleFrom(
@@ -313,7 +319,7 @@ class _WriteScreenState extends State<WriteScreen> {
                         OutlinedButton.icon(
                           onPressed: _done ? null : _clear,
                           icon: const Icon(Icons.refresh),
-                          label: const Text('מחיקה',
+                          label: Text(tr('מחיקה', 'Clear'),
                               style: TextStyle(fontSize: 17)),
                         ),
                         OutlinedButton.icon(
@@ -321,13 +327,13 @@ class _WriteScreenState extends State<WriteScreen> {
                               ? null
                               : () => setState(() => _showHint = true),
                           icon: const Icon(Icons.lightbulb_outline),
-                          label: const Text('רמז',
+                          label: Text(tr('רמז', 'Hint'),
                               style: TextStyle(fontSize: 17)),
                         ),
                         ElevatedButton.icon(
                           onPressed: () => _audio.playWritePrompt(_current),
                           icon: const Icon(Icons.volume_up),
-                          label: Text(g('שמעי', 'שמע'),
+                          label: Text(tr(g('שמעי', 'שמע'), 'Listen'),
                               style: const TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.amber,
@@ -372,7 +378,7 @@ class _WritePainter extends CustomPainter {
             height: 1.0,
           ),
         ),
-        textDirection: TextDirection.rtl,
+        textDirection: appDirection,
       )..layout();
       tp.paint(
         canvas,

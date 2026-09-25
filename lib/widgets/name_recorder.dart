@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:record/record.dart';
 
 import '../services/letter_audio.dart';
+import '../services/profile_service.dart';
 
 class RecordedName {
   RecordedName(this.bytes, this.mime);
@@ -70,11 +71,11 @@ class _NameRecorderState extends State<NameRecorder> {
     setState(() => _error = null);
     try {
       if (!await _recorder.hasPermission()) {
-        setState(() => _error = 'צריך לאשר גישה למיקרופון');
+        setState(() => _error = tr('צריך לאשר גישה למיקרופון', 'Please allow microphone access'));
         return;
       }
       if (!await _recorder.isEncoderSupported(AudioEncoder.pcm16bits)) {
-        setState(() => _error = 'המכשיר לא תומך בהקלטה');
+        setState(() => _error = tr('המכשיר לא תומך בהקלטה', "This device can't record"));
         return;
       }
       _pcm.clear();
@@ -89,7 +90,7 @@ class _NameRecorderState extends State<NameRecorder> {
       setState(() => _recording = true);
       _autoStop = Timer(maxLength, _stop);
     } catch (e) {
-      setState(() => _error = 'ההקלטה לא הצליחה');
+      setState(() => _error = tr('ההקלטה לא הצליחה', 'Recording failed'));
       debugPrint('Record start failed: $e');
     }
   }
@@ -105,7 +106,7 @@ class _NameRecorderState extends State<NameRecorder> {
 
       // Less than a quarter of a second = nothing was really said.
       if (_pcm.length < _sampleRate ~/ 2) {
-        setState(() => _error = 'ההקלטה קצרה מדי, נסו שוב');
+        setState(() => _error = tr('ההקלטה קצרה מדי, נסו שוב', 'Too short, please try again'));
         return;
       }
       final recorded = RecordedName(_toWav(_pcm), 'audio/wav');
@@ -115,7 +116,7 @@ class _NameRecorderState extends State<NameRecorder> {
     } catch (e) {
       setState(() {
         _recording = false;
-        _error = 'ההקלטה לא הצליחה';
+        _error = tr('ההקלטה לא הצליחה', 'Recording failed');
       });
       debugPrint('Record stop failed: $e');
     }
@@ -162,14 +163,14 @@ class _NameRecorderState extends State<NameRecorder> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            '🎙️ הקלטת השם (לא חובה)',
+          Text(
+            tr('🎙️ הקלטת השם (לא חובה)', "🎙️ Record the child's name (optional)"),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'לוחצים, אומרים את השם בקול, ולוחצים שוב. '
-            'האפליקציה תשמיע את השם הזה במשובים.',
+          Text(
+            tr('לוחצים, אומרים את השם בקול, ולוחצים שוב. האפליקציה תשמיע את השם הזה במשובים.',
+                'Tap, say the name out loud, and tap again. The app will use it when praising.'),
             style: TextStyle(fontSize: 14, color: Colors.black54),
           ),
           const SizedBox(height: 12),
@@ -182,10 +183,10 @@ class _NameRecorderState extends State<NameRecorder> {
                 icon: Icon(_recording ? Icons.stop : Icons.mic),
                 label: Text(
                   _recording
-                      ? 'עצירה'
+                      ? tr('עצירה', 'Stop')
                       : _url == null
-                          ? 'הקלטה'
-                          : 'הקלטה מחדש',
+                          ? tr('הקלטה', 'Record')
+                          : tr('הקלטה מחדש', 'Record again'),
                   style: const TextStyle(fontSize: 17),
                 ),
                 style: FilledButton.styleFrom(
@@ -196,7 +197,7 @@ class _NameRecorderState extends State<NameRecorder> {
                 OutlinedButton.icon(
                   onPressed: () => _audio.playUrl(_url!),
                   icon: const Icon(Icons.play_arrow),
-                  label: const Text('השמעה', style: TextStyle(fontSize: 17)),
+                  label: Text(tr('השמעה', 'Play'), style: const TextStyle(fontSize: 17)),
                 ),
                 TextButton.icon(
                   onPressed: () {
@@ -204,16 +205,16 @@ class _NameRecorderState extends State<NameRecorder> {
                     widget.onRemoved();
                   },
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('מחיקה', style: TextStyle(fontSize: 17)),
+                  label: Text(tr('מחיקה', 'Delete'), style: const TextStyle(fontSize: 17)),
                 ),
               ],
             ],
           ),
           if (_recording)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 10),
               child: Text(
-                '🔴 מקליט... אמרו את השם עכשיו',
+                tr('🔴 מקליט... אמרו את השם עכשיו', '🔴 Recording... say the name now'),
                 style: TextStyle(fontSize: 16, color: Colors.red),
               ),
             ),

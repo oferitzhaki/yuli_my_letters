@@ -147,7 +147,7 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFFFF3E0),
         appBar: AppBar(
@@ -231,7 +231,7 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
                           onPressed: _playPrompt,
                           icon: const Icon(Icons.volume_up, size: 28),
                           label: Text(
-                            g('שמעי שוב', 'שמע שוב'),
+                            tr(g('שמעי שוב', 'שמע שוב'), 'Listen again'),
                             style: TextStyle(fontSize: 18),
                           ),
                           style: ElevatedButton.styleFrom(
@@ -266,7 +266,8 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
                         child: _answeredCorrectly
                             ? FittedBox(
                                 child: Text(
-                                  '🎉 נכון! ${_current.letter} · ${_current.emoji} ${_current.animalName}',
+                                  tr('🎉 נכון! ${_current.letter} · ${_current.emoji} ${_current.animalName}',
+                                      '🎉 Correct! ${_current.letter} · ${_current.emoji} ${_current.animalName}'),
                                   style: const TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,

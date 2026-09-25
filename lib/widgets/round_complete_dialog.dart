@@ -14,10 +14,11 @@ Future<void> showRoundCompleteDialog(
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) => Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: AlertDialog(
         title: Text(
-          '🎉 כל הכבוד ${ProfileService.instance.name}!',
+          tr('🎉 כל הכבוד ${ProfileService.instance.name}!',
+              '🎉 Great job, ${ProfileService.instance.name}!'),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 28),
         ),
@@ -25,14 +26,15 @@ Future<void> showRoundCompleteDialog(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'צברת $score כוכבים ⭐',
+              tr('צברת $score כוכבים ⭐', 'You earned $score stars ⭐'),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 22),
             ),
             if (unlockedNew) ...[
               const SizedBox(height: 16),
               Text(
-                '🎁 נפתחו אותיות חדשות!\n${g('בואי', 'בוא')} להכיר אותן',
+                tr('🎁 נפתחו אותיות חדשות!\n${g('בואי', 'בוא')} להכיר אותן',
+                    "🎁 New letters unlocked!\nLet's meet them"),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
@@ -51,7 +53,7 @@ Future<void> showRoundCompleteDialog(
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context).pop();
               },
-              child: const Text('לאותיות החדשות 🎁',
+              child: Text(tr('לאותיות החדשות 🎁', 'Meet the new letters 🎁'),
                   style: TextStyle(fontSize: 18)),
             )
           else ...[
@@ -60,14 +62,16 @@ Future<void> showRoundCompleteDialog(
                 Navigator.of(dialogContext).pop();
                 Navigator.of(context).pop();
               },
-              child: const Text('למשחקים 🎮', style: TextStyle(fontSize: 18)),
+              child: Text(tr('למשחקים 🎮', 'To the games 🎮'),
+                  style: const TextStyle(fontSize: 18)),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 onPlayAgain();
               },
-              child: const Text('עוד סיבוב 🔄', style: TextStyle(fontSize: 18)),
+              child: Text(tr('עוד סיבוב 🔄', 'Play again 🔄'),
+                  style: const TextStyle(fontSize: 18)),
             ),
           ],
         ],

@@ -51,40 +51,47 @@ class LetterAudio {
         _praise(),
       ]);
 
-  /// "כמעט! נסי שוב" - returns true if it finished uninterrupted.
+  /// "כמעט! נסי שוב" / "Almost! Try again" - true if not interrupted.
   Future<bool> playTryAgain() =>
-      _sequence(['assets/audio/fb_try_${_g}_${_random.nextInt(2) + 1}.mp3']);
+      _sequence([_fb('try_${_g}_${_random.nextInt(2) + 1}', 'try_${_random.nextInt(2) + 1}')]);
 
   Future<bool> playRoundDone({bool unlocked = false}) => _sequence([
         if (_name != null) _name!,
-        'assets/audio/fb_round_$_g.mp3',
-        if (unlocked) 'assets/audio/fb_unlock_$_g.mp3',
+        _fb('round_$_g', 'round'),
+        if (unlocked) _fb('unlock_$_g', 'unlock'),
       ]);
 
   Future<bool> playIntroDone() => _sequence([
         if (_name != null) _name!,
-        'assets/audio/fb_intro_done_n.mp3',
+        _fb('intro_done_n', 'intro_done'),
       ]);
 
-  /// "כתבי את האות ... בֵּית"
+  /// "כתבי את האות ... בֵּית" / "Write the letter ... B"
   Future<bool> playWritePrompt(HebrewCharacter c) =>
-      _sequence(['assets/audio/fb_write_$_g.mp3', _letter(c)]);
+      _sequence([_fb('write_$_g', 'write'), _letter(c)]);
 
   // ---------- internals ----------
 
   String get _g => ProfileService.instance.isBoy ? 'm' : 'f';
   String? get _name => ProfileService.instance.voiceUrl;
+  bool get _en => ProfileService.instance.isEnglish;
+
+  /// Feedback file: fb_<hebrew>.mp3, or fb_en_<english>.mp3 in English.
+  String _fb(String hebrew, String english) =>
+      _en ? 'assets/audio/fb_en_$english.mp3' : 'assets/audio/fb_$hebrew.mp3';
 
   String _letter(HebrewCharacter c) => 'assets/audio/${c.id}.mp3';
   String _word(HebrewCharacter c) => 'assets/audio/animal_${c.id}.mp3';
 
   String _praise() {
-    final options = [
-      'assets/audio/fb_praise_n_1.mp3',
-      'assets/audio/fb_praise_n_2.mp3',
-      'assets/audio/fb_praise_${_g}_1.mp3',
-      'assets/audio/fb_praise_${_g}_2.mp3',
-    ];
+    final options = _en
+        ? [for (var i = 1; i <= 4; i++) 'assets/audio/fb_en_praise_$i.mp3']
+        : [
+            'assets/audio/fb_praise_n_1.mp3',
+            'assets/audio/fb_praise_n_2.mp3',
+            'assets/audio/fb_praise_${_g}_1.mp3',
+            'assets/audio/fb_praise_${_g}_2.mp3',
+          ];
     return options[_random.nextInt(options.length)];
   }
 

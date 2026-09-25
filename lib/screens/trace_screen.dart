@@ -34,7 +34,7 @@ void _paintLetter(Canvas canvas, double side, String letter, Color color) {
         height: 1.0,
       ),
     ),
-    textDirection: TextDirection.rtl,
+    textDirection: appDirection,
   )..layout();
   tp.paint(canvas, Offset((side - tp.width) / 2, (side - tp.height) / 2));
 }
@@ -265,14 +265,14 @@ class _TraceScreenState extends State<TraceScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFE8EAF6),
         appBar: AppBar(
           backgroundColor: Colors.indigo,
           foregroundColor: Colors.white,
           title: Text(
-            'מעקב אחרי האות · ${_index + 1}/${_roundLetters.length}',
+            '${tr('מעקב אחרי האות', 'Trace the Letter')} · ${_index + 1}/${_roundLetters.length}',
           ),
           actions: [
             Padding(
@@ -308,12 +308,16 @@ class _TraceScreenState extends State<TraceScreen> {
                       child: FittedBox(
                         child: Text(
                           _done
-                              ? '🎉 נכון! ${_current.letter}'
+                              ? tr('🎉 נכון! ${_current.letter}', '🎉 Correct! ${_current.letter}')
                               : _offTrack
-                                  ? g('נסי לצייר רק על האות האפורה 🙂',
-                                      'נסה לצייר רק על האות האפורה 🙂')
-                                  : g('ציירי על האות באצבע ✏️',
-                                      'צייר על האות באצבע ✏️'),
+                                  ? tr(
+                                      g('נסי לצייר רק על האות האפורה 🙂',
+                                          'נסה לצייר רק על האות האפורה 🙂'),
+                                      'Try to draw only on the grey letter 🙂')
+                                  : tr(
+                                      g('ציירי על האות באצבע ✏️',
+                                          'צייר על האות באצבע ✏️'),
+                                      'Trace the letter with your finger ✏️'),
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -370,8 +374,8 @@ class _TraceScreenState extends State<TraceScreen> {
                         OutlinedButton.icon(
                           onPressed: _done ? null : _clear,
                           icon: const Icon(Icons.refresh),
-                          label: const Text(
-                            'מחיקה',
+                          label: Text(
+                            tr('מחיקה', 'Clear'),
                             style: TextStyle(fontSize: 18),
                           ),
                         ),
@@ -380,7 +384,7 @@ class _TraceScreenState extends State<TraceScreen> {
                           onPressed: () => _audio.playLetter(_current),
                           icon: const Icon(Icons.volume_up),
                           label: Text(
-                            g('שמעי', 'שמע'),
+                            tr(g('שמעי', 'שמע'), 'Listen'),
                             style: TextStyle(fontSize: 18),
                           ),
                           style: ElevatedButton.styleFrom(

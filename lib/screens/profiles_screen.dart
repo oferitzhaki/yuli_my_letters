@@ -36,19 +36,19 @@ class ProfilesScreen extends StatelessWidget {
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (sheetContext) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: appDirection,
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: Text('עריכת הפרטים של ${p.name}'),
+                title: Text(tr('עריכת הפרטים של ${p.name}', 'Edit ${p.name}')),
                 onTap: () => Navigator.pop(sheetContext, 'edit'),
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: Text('מחיקת ${p.name}'),
+                title: Text(tr('מחיקת ${p.name}', 'Delete ${p.name}')),
                 onTap: () => Navigator.pop(sheetContext, 'delete'),
               ),
             ],
@@ -65,19 +65,20 @@ class ProfilesScreen extends StatelessWidget {
       final ok = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: appDirection,
           child: AlertDialog(
-            title: Text('למחוק את ${p.name}?'),
-            content: const Text('כל הכוכבים וההתקדמות יימחקו לצמיתות.'),
+            title: Text(tr('למחוק את ${p.name}?', 'Delete ${p.name}?')),
+            content: Text(tr('כל הכוכבים וההתקדמות יימחקו לצמיתות.',
+                'All stars and progress will be deleted for good.')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('ביטול'),
+                child: Text(tr('ביטול', 'Cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
                 style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('מחיקה'),
+                child: Text(tr('מחיקה', 'Delete')),
               ),
             ],
           ),
@@ -89,24 +90,45 @@ class ProfilesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuild everything (including direction) when the language changes.
+    return ListenableBuilder(
+      listenable: ProfileService.instance,
+      builder: (context, _) => _build(context),
+    );
+  }
+
+  Widget _build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFFFF8F0),
         body: SafeArea(
           child: ListenableBuilder(
             listenable: ProfileService.instance,
             builder: (context, _) {
-              final profiles = ProfileService.instance.profiles;
+              final service = ProfileService.instance;
+              final profiles = service.profiles;
+              // Very first launch: pick the app's language before anything.
+              if (profiles.isEmpty && !service.uiLanguageChosen) {
+                return const _LanguageChooser();
+              }
               return Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 640),
                   child: ListView(
                     padding: const EdgeInsets.all(24),
                     children: [
-                      const SizedBox(height: 12),
-                      const Text(
-                        'לומדים אותיות 🔤',
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: TextButton.icon(
+                          onPressed: () => service
+                              .setUiLanguage(service.isEnglish ? 'he' : 'en'),
+                          icon: const Icon(Icons.language),
+                          label: Text(service.isEnglish ? 'עברית' : 'English'),
+                        ),
+                      ),
+                      Text(
+                        tr('לומדים אותיות 🔤', 'Learning Letters 🔤'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 34,
@@ -116,8 +138,9 @@ class ProfilesScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         profiles.isEmpty
-                            ? 'ברוכים הבאים! נתחיל בהרשמה קצרה'
-                            : 'מי משחק?',
+                            ? tr('ברוכים הבאים! נתחיל בהרשמה קצרה',
+                                "Welcome! Let's start with a quick sign-up")
+                            : tr('מי משחק?', "Who's playing?"),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 22,
@@ -143,8 +166,9 @@ class ProfilesScreen extends StatelessWidget {
                       ),
                       if (profiles.isNotEmpty) ...[
                         const SizedBox(height: 24),
-                        const Text(
-                          'להורים: לחיצה ארוכה על כרטיס לעריכה או מחיקה',
+                        Text(
+                          tr('להורים: לחיצה ארוכה על כרטיס לעריכה או מחיקה',
+                              'Parents: long-press a card to edit or delete'),
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 14, color: Colors.black45),
                         ),
@@ -203,6 +227,10 @@ class _ProfileCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                Text(
+                  profile.isEnglish ? 'ABC' : 'אבג',
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                ),
                 if (profile.hasVoice)
                   const Text('🎙️', style: TextStyle(fontSize: 16)),
               ],
@@ -231,13 +259,13 @@ class _AddCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(24),
           onTap: onTap,
-          child: const Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.add_circle, size: 64, color: Colors.green),
               SizedBox(height: 8),
               Text(
-                'הוספת ילד/ה',
+                tr('הוספת ילד/ה', 'Add a child'),
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ],
@@ -248,3 +276,53 @@ class _AddCard extends StatelessWidget {
   }
 }
 
+
+/// Shown once, on the very first launch.
+class _LanguageChooser extends StatelessWidget {
+  const _LanguageChooser();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget choice(String label, String sub, String lang) => SizedBox(
+          width: 260,
+          child: FilledButton(
+            onPressed: () => ProfileService.instance.setUiLanguage(lang),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.deepOrange,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Column(
+              children: [
+                Text(label, style: const TextStyle(fontSize: 28)),
+                Text(sub, style: const TextStyle(fontSize: 15)),
+              ],
+            ),
+          ),
+        );
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🔤', style: TextStyle(fontSize: 72)),
+            const SizedBox(height: 12),
+            const Text(
+              'בחרו שפה · Choose a language',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 28),
+            choice('עברית', 'לומדים אותיות בעברית', 'he'),
+            const SizedBox(height: 16),
+            choice('English', 'Learn the English ABC', 'en'),
+          ],
+        ),
+      ),
+    );
+  }
+}

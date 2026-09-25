@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/hebrew_characters.dart';
+import 'profile_service.dart';
 
 class ProgressService extends ChangeNotifier {
   ProgressService._();
@@ -42,10 +43,10 @@ class ProgressService extends ChangeNotifier {
   int get stars => _stars;
   int get unlockedCount => _unlockedCount;
   int get level => (_unlockedCount / groupSize).ceil();
-  bool get isComplete => _unlockedCount >= hebrewCharacters.length;
+  bool get isComplete => _unlockedCount >= activeLetters.length;
 
   List<HebrewCharacter> get unlockedLetters =>
-      hebrewCharacters.take(_unlockedCount).toList();
+      activeLetters.take(_unlockedCount).toList();
 
   /// Open letters she has not met yet in "Meet the letters".
   List<HebrewCharacter> get lettersToIntroduce =>
@@ -59,7 +60,7 @@ class ProgressService extends ChangeNotifier {
   int masteryOf(String id) => _mastery[id] ?? 0;
   bool isMastered(String id) => masteryOf(id) >= masteryGoal;
   int get masteredCount =>
-      hebrewCharacters.where((c) => isMastered(c.id)).length;
+      activeLetters.where((c) => isMastered(c.id)).length;
 
   /// Picks letters for a round, preferring the ones she knows least.
   List<HebrewCharacter> pickRoundLetters(int count) {
@@ -84,7 +85,7 @@ class ProgressService extends ChangeNotifier {
       _prefs = p;
       _stars = p.getInt('$_prefix$_kStars') ?? 0;
       _unlockedCount = (p.getInt('$_prefix$_kUnlocked') ?? groupSize)
-          .clamp(groupSize, hebrewCharacters.length)
+          .clamp(groupSize, activeLetters.length)
           .toInt();
       _introduced.addAll(
           p.getStringList('$_prefix$_kIntroduced') ?? const <String>[]);
@@ -170,7 +171,7 @@ class ProgressService extends ChangeNotifier {
   bool _tryUnlock() {
     if (isComplete) return false;
     if (!unlockedLetters.every((c) => isMastered(c.id))) return false;
-    _unlockedCount = min(_unlockedCount + groupSize, hebrewCharacters.length);
+    _unlockedCount = min(_unlockedCount + groupSize, activeLetters.length);
     return true;
   }
 

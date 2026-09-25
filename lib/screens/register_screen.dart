@@ -20,6 +20,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _name = TextEditingController();
   bool _isBoy = false;
+  late String _language; // 'he' or 'en' - what the child learns
   RecordedName? _recording;
   bool _voiceRemoved = false;
   bool _saving = false;
@@ -30,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     final e = widget.editing;
+    _language = e?.language ?? ProfileService.instance.language;
     if (e != null) {
       _name.text = e.name;
       _isBoy = e.isBoy;
@@ -46,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final name = _name.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('צריך לכתוב שם 🙂')),
+        SnackBar(content: Text(tr('צריך לכתוב שם 🙂', 'Please enter a name 🙂'))),
       );
       return;
     }
@@ -57,6 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final created = await service.add(
         name: name,
         isBoy: _isBoy,
+        language: _language,
         voice: _recording?.bytes,
         voiceMime: _recording?.mime,
       );
@@ -66,6 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         e,
         name: name,
         isBoy: _isBoy,
+        language: _language,
         voice: _recording?.bytes,
         voiceMime: _recording?.mime,
         removeVoice: _voiceRemoved && _recording == null,
@@ -81,13 +85,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         : ProfileService.instance.voiceUrlOf(widget.editing!);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFFFF8F0),
         appBar: AppBar(
           backgroundColor: Colors.deepOrange,
           foregroundColor: Colors.white,
-          title: Text(_isEdit ? 'עריכת פרטים' : 'הרשמה'),
+          title: Text(_isEdit
+              ? tr('עריכת פרטים', 'Edit details')
+              : tr('הרשמה', 'Sign up')),
         ),
         body: SafeArea(
           child: Center(
@@ -96,8 +102,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  const Text(
-                    'שם הילד/ה',
+                  Text(
+                    tr('שם הילד/ה', "Child's name"),
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -106,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 26),
                     decoration: InputDecoration(
-                      hintText: 'למשל: נועה / Noa',
+                      hintText: tr('למשל: נועה / Noa', 'e.g. Noa'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -115,30 +121,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'בן או בת?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'כדי שהאפליקציה תדבר אליו/ה נכון ("כתבי" או "כתוב")',
-                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                  Text(
+                    tr('מה לומדים?', 'What to learn?'),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  SegmentedButton<bool>(
-                    segments: const [
+                  SegmentedButton<String>(
+                    segments: [
                       ButtonSegment(
-                        value: false,
-                        label: Text('בת 👧', style: TextStyle(fontSize: 20)),
+                        value: 'he',
+                        label: Text(tr('אותיות בעברית', 'Hebrew letters'),
+                            style: const TextStyle(fontSize: 18)),
                       ),
                       ButtonSegment(
-                        value: true,
-                        label: Text('בן 👦', style: TextStyle(fontSize: 20)),
+                        value: 'en',
+                        label: Text(tr('ABC באנגלית', 'English ABC'),
+                            style: const TextStyle(fontSize: 18)),
                       ),
                     ],
-                    selected: {_isBoy},
-                    onSelectionChanged: (s) => setState(() => _isBoy = s.first),
+                    selected: {_language},
+                    onSelectionChanged: (s) =>
+                        setState(() => _language = s.first),
                   ),
+                  // Boy/girl only matters for Hebrew ("כתבי" / "כתוב").
+                  if (_language == 'he') ...[
+                    const SizedBox(height: 24),
+                    Text(
+                      tr('בן או בת?', 'Boy or girl?'),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tr('כדי שהאפליקציה תדבר אליו/ה נכון ("כתבי" או "כתוב")',
+                          'So the app speaks Hebrew correctly (girl or boy forms)'),
+                      style:
+                          const TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 8),
+                    SegmentedButton<bool>(
+                      segments: [
+                        ButtonSegment(
+                          value: false,
+                          label: Text(tr('בת 👧', 'Girl 👧'),
+                              style: const TextStyle(fontSize: 20)),
+                        ),
+                        ButtonSegment(
+                          value: true,
+                          label: Text(tr('בן 👦', 'Boy 👦'),
+                              style: const TextStyle(fontSize: 20)),
+                        ),
+                      ],
+                      selected: {_isBoy},
+                      onSelectionChanged: (s) =>
+                          setState(() => _isBoy = s.first),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   NameRecorder(
                     existingUrl: existingVoice,
@@ -159,7 +198,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: Text(
-                      _isEdit ? 'שמירה' : 'בואו נתחיל! 🎉',
+                      _isEdit
+                          ? tr('שמירה', 'Save')
+                          : tr('בואו נתחיל! 🎉', "Let's start! 🎉"),
                       style: const TextStyle(fontSize: 22),
                     ),
                   ),

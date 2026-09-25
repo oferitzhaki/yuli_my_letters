@@ -32,16 +32,14 @@ class LetterRecognizer {
   static final LetterRecognizer instance = LetterRecognizer._();
 
   final Map<String, _Shape> _templates = {};
-  Future<void>? _preparing;
-  bool _finished = false;
+  final Map<String, Future<void>> _preparing = {};
 
-  bool get isReady => _finished && _templates.isNotEmpty;
+  /// Builds the templates for one alphabet once (a moment the first time).
+  Future<void> prepare(List<HebrewCharacter> letters) =>
+      _preparing[letters.first.id] ??= _prepareAll(letters);
 
-  /// Builds the letter templates once (takes a moment the first time).
-  Future<void> prepare() => _preparing ??= _prepareAll();
-
-  Future<void> _prepareAll() async {
-    for (final c in hebrewCharacters) {
+  Future<void> _prepareAll(List<HebrewCharacter> letters) async {
+    for (final c in letters) {
       for (var attempt = 0; attempt < 8; attempt++) {
         final shape = await _renderLetter(c.letter);
         if (shape != null) {
@@ -52,16 +50,19 @@ class LetterRecognizer {
         await Future.delayed(const Duration(milliseconds: 400));
       }
     }
-    _finished = true;
   }
 
-  /// All letters ordered from most to least similar to the drawing.
-  List<({String id, double score})> rank(List<List<Offset>> strokes) {
+  /// The given letters, ordered from most to least similar to the drawing.
+  List<({String id, double score})> rank(
+    List<List<Offset>> strokes,
+    List<HebrewCharacter> letters,
+  ) {
     final drawing = _shapeFromStrokes(strokes);
-    if (drawing == null || !isReady) return const [];
+    if (drawing == null) return const [];
     final results = [
-      for (final e in _templates.entries)
-        (id: e.key, score: _score(drawing, e.value)),
+      for (final c in letters)
+        if (_templates[c.id] != null)
+          (id: c.id, score: _score(drawing, _templates[c.id]!)),
     ]..sort((a, b) => a.score.compareTo(b.score));
     return results;
   }

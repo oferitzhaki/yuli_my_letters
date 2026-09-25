@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 
-import '../constants/hebrew_characters.dart';
 import '../services/progress_service.dart';
 import '../services/profile_service.dart';
 import 'choice_game_screen.dart';
@@ -47,12 +46,12 @@ List<_GameInfo> _games() => [
       _GameInfo(
         level: 1,
         emoji: '🦁',
-        title: 'רואים ומתאימים',
-        subtitle: 'רואים אות ובוחרים תמונה',
+        title: tr('רואים ומתאימים', 'See & Match'),
+        subtitle: tr('רואים אות ובוחרים תמונה', 'See a letter, pick a picture'),
         color: Colors.orange,
         builder: (_) => ChoiceGameScreen(
-          title: 'רואים ומתאימים',
-          instruction: 'מה מתחיל באות הזו?',
+          title: tr('רואים ומתאימים', 'See & Match'),
+          instruction: tr('מה מתחיל באות הזו?', 'What starts with this letter?'),
           promptBuilder: (c) => Text(c.letter, style: _promptLetter),
           optionBuilder: (c) => Text(c.emoji, style: _optionEmoji),
           playPrompt: (audio, c) => audio.playLetter(c),
@@ -61,12 +60,12 @@ List<_GameInfo> _games() => [
       _GameInfo(
         level: 2,
         emoji: '👂',
-        title: 'שומעים ובוחרים',
-        subtitle: 'שומעים אות ומוצאים אותה',
+        title: tr('שומעים ובוחרים', 'Listen & Choose'),
+        subtitle: tr('שומעים אות ומוצאים אותה', 'Hear a letter and find it'),
         color: Colors.blue,
         builder: (_) => ChoiceGameScreen(
-          title: 'שומעים ובוחרים',
-          instruction: 'איזו אות שמעת?',
+          title: tr('שומעים ובוחרים', 'Listen & Choose'),
+          instruction: tr('איזו אות שמעת?', 'Which letter did you hear?'),
           promptBuilder: (_) => const Icon(
             Icons.volume_up,
             size: 120,
@@ -79,12 +78,12 @@ List<_GameInfo> _games() => [
       _GameInfo(
         level: 3,
         emoji: '🔤',
-        title: 'באיזו אות מתחיל?',
-        subtitle: 'רואים תמונה ובוחרים אות',
+        title: tr('באיזו אות מתחיל?', 'First Letter'),
+        subtitle: tr('רואים תמונה ובוחרים אות', 'See a picture, pick its letter'),
         color: Colors.teal,
         builder: (_) => ChoiceGameScreen(
-          title: 'באיזו אות מתחיל?',
-          instruction: 'באיזו אות זה מתחיל?',
+          title: tr('באיזו אות מתחיל?', 'First Letter'),
+          instruction: tr('באיזו אות זה מתחיל?', 'Which letter does it start with?'),
           promptBuilder: (c) => Text(c.emoji, style: _promptEmoji),
           optionBuilder: (c) => Text(c.letter, style: _optionLetter),
           playPrompt: (audio, c) => audio.playAnimal(c),
@@ -93,24 +92,24 @@ List<_GameInfo> _games() => [
       _GameInfo(
         level: 4,
         emoji: '🧠',
-        title: 'משחק זיכרון',
-        subtitle: 'מוצאים זוגות של אות ותמונה',
+        title: tr('משחק זיכרון', 'Memory Game'),
+        subtitle: tr('מוצאים זוגות של אות ותמונה', 'Match letters and pictures'),
         color: Colors.purple,
         builder: (_) => const MemoryScreen(),
       ),
       _GameInfo(
         level: 5,
         emoji: '✏️',
-        title: 'מעקב אחרי האות',
-        subtitle: 'מציירים את האות באצבע',
+        title: tr('מעקב אחרי האות', 'Trace the Letter'),
+        subtitle: tr('מציירים את האות באצבע', 'Trace the letter with your finger'),
         color: Colors.indigo,
         builder: (_) => const TraceScreen(),
       ),
       _GameInfo(
         level: 6,
         emoji: '✍️',
-        title: 'כתיבה חופשית',
-        subtitle: 'שומעים אות וכותבים אותה לבד',
+        title: tr('כתיבה חופשית', 'Free Writing'),
+        subtitle: tr('שומעים אות וכותבים אותה לבד', 'Hear a letter and write it yourself'),
         color: Colors.pink,
         builder: (_) => const WriteScreen(),
       ),
@@ -123,20 +122,21 @@ class GamesMenuScreen extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: appDirection,
         child: AlertDialog(
-          title: const Text('לאפס את ההתקדמות?'),
-          content: const Text(
-            'כל הכוכבים והאותיות שנלמדו יימחקו, ומתחילים מההתחלה.',
+          title: Text(tr('לאפס את ההתקדמות?', 'Reset progress?')),
+          content: Text(
+            tr('כל הכוכבים והאותיות שנלמדו יימחקו, ומתחילים מההתחלה.',
+              'All stars and learned letters will be deleted.'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('ביטול'),
+              child: Text(tr('ביטול', 'Cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('לאפס'),
+              child: Text(tr('לאפס', 'Reset')),
             ),
           ],
         ),
@@ -149,16 +149,16 @@ class GamesMenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final games = _games();
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appDirection,
       child: Scaffold(
         backgroundColor: const Color(0xFFFFF8F0),
         appBar: AppBar(
           backgroundColor: Colors.deepOrange,
           foregroundColor: Colors.white,
-          title: Text(g('בחרי משחק 🎮', 'בחר משחק 🎮')),
+          title: Text(tr(g('בחרי משחק 🎮', 'בחר משחק 🎮'), 'Pick a game 🎮')),
           actions: [
             IconButton(
-              tooltip: 'איפוס התקדמות (להורים)',
+              tooltip: tr('איפוס התקדמות (להורים)', 'Reset progress (parents)'),
               icon: const Icon(Icons.restart_alt),
               onPressed: () => _confirmReset(context),
             ),
@@ -182,11 +182,14 @@ class GamesMenuScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       _MenuCard(
                         emoji: '✨',
-                        label: newCount > 0 ? 'חדש!' : 'חזרה',
-                        title: g('הכירי את האותיות', 'הכר את האותיות'),
+                        label: newCount > 0 ? tr('חדש!', 'New!') : tr('חזרה', 'Review'),
+                        title: tr(g('הכירי את האותיות', 'הכר את האותיות'),
+                            'Meet the Letters'),
                         subtitle: newCount > 0
-                            ? 'יש $newCount אותיות חדשות להכיר'
-                            : 'חוזרים על האותיות שלמדת',
+                            ? tr('יש $newCount אותיות חדשות להכיר',
+                                '$newCount new letters to meet')
+                            : tr('חוזרים על האותיות שלמדת',
+                                'Review the letters you learned'),
                         color: Colors.green,
                         highlight: newCount > 0,
                         onTap: () => Navigator.push(
@@ -200,7 +203,7 @@ class GamesMenuScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         _MenuCard(
                           emoji: g.emoji,
-                          label: 'שלב ${g.level}',
+                          label: tr('שלב ${g.level}', 'Level ${g.level}'),
                           title: g.title,
                           subtitle: g.subtitle,
                           color: g.color,
@@ -208,9 +211,10 @@ class GamesMenuScreen extends StatelessWidget {
                           onTap: () {
                             if (!gamesOpen) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'קודם מכירים את האותיות ✨',
+                                    tr('קודם מכירים את האותיות ✨',
+                                        'First, meet the letters ✨'),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(fontSize: 18),
                                   ),
@@ -264,7 +268,7 @@ class _ProgressHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                'אותיות: ${progress.masteredCount}/${hebrewCharacters.length}',
+                '${tr('אותיות', 'Letters')}: ${progress.masteredCount}/${activeLetters.length}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -279,11 +283,11 @@ class _ProgressHeader extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              for (var i = 0; i < hebrewCharacters.length; i++)
+              for (var i = 0; i < activeLetters.length; i++)
                 _LetterChip(
-                  letter: hebrewCharacters[i].letter,
+                  letter: activeLetters[i].letter,
                   unlocked: i < progress.unlockedCount,
-                  mastered: progress.isMastered(hebrewCharacters[i].id),
+                  mastered: progress.isMastered(activeLetters[i].id),
                 ),
             ],
           ),
