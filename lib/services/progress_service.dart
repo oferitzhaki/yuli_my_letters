@@ -30,6 +30,7 @@ class ProgressService extends ChangeNotifier {
 
   final Random _random = Random();
   SharedPreferences? _prefs;
+  String _prefix = ''; // 'p_<profileId>_' - each child has own progress
 
   int _stars = 0;
   int _unlockedCount = groupSize;
@@ -71,19 +72,23 @@ class ProgressService extends ChangeNotifier {
 
   // ---------- write ----------
 
-  Future<void> load() async {
+  /// Loads the progress of one child.
+  Future<void> loadFor(String profileId) async {
+    _prefix = 'p_${profileId}_';
+    _stars = 0;
+    _unlockedCount = groupSize;
+    _introduced.clear();
+    _mastery.clear();
     try {
       final p = await SharedPreferences.getInstance();
       _prefs = p;
-      _stars = p.getInt(_kStars) ?? 0;
-      _unlockedCount = (p.getInt(_kUnlocked) ?? groupSize)
+      _stars = p.getInt('$_prefix$_kStars') ?? 0;
+      _unlockedCount = (p.getInt('$_prefix$_kUnlocked') ?? groupSize)
           .clamp(groupSize, hebrewCharacters.length)
           .toInt();
-      _introduced
-        ..clear()
-        ..addAll(p.getStringList(_kIntroduced) ?? const <String>[]);
-      _mastery.clear();
-      final raw = p.getString(_kMastery);
+      _introduced.addAll(
+          p.getStringList('$_prefix$_kIntroduced') ?? const <String>[]);
+      final raw = p.getString('$_prefix$_kMastery');
       if (raw != null) {
         final decoded = jsonDecode(raw) as Map<String, dynamic>;
         decoded.forEach((k, v) => _mastery[k] = (v as num).toInt());
@@ -92,6 +97,38 @@ class ProgressService extends ChangeNotifier {
       debugPrint('Progress load failed: $e');
     }
     notifyListeners();
+  }
+
+  // ---------- per-child storage helpers ----------
+
+  static const _allKeys = [_kStars, _kUnlocked, _kIntroduced, _kMastery];
+
+  /// Progress saved by the older single-child version (no prefix).
+  static bool hasLegacyProgress(SharedPreferences p) =>
+      _allKeys.any(p.containsKey);
+
+  static Future<void> migrateLegacy(SharedPreferences p, String id) async {
+    final prefix = 'p_${id}_';
+    final stars = p.getInt(_kStars);
+    final unlocked = p.getInt(_kUnlocked);
+    final introduced = p.getStringList(_kIntroduced);
+    final mastery = p.getString(_kMastery);
+    if (stars != null) await p.setInt('$prefix$_kStars', stars);
+    if (unlocked != null) await p.setInt('$prefix$_kUnlocked', unlocked);
+    if (introduced != null) {
+      await p.setStringList('$prefix$_kIntroduced', introduced);
+    }
+    if (mastery != null) await p.setString('$prefix$_kMastery', mastery);
+    for (final k in _allKeys) {
+      await p.remove(k);
+    }
+  }
+
+  static Future<void> deleteFor(String id) async {
+    final p = await SharedPreferences.getInstance();
+    for (final k in _allKeys) {
+      await p.remove('p_${id}_$k');
+    }
   }
 
   void addStars(int amount) {
@@ -144,12 +181,12 @@ class ProgressService extends ChangeNotifier {
 
   Future<void> _save() async {
     final p = _prefs;
-    if (p == null) return;
+    if (p == null || _prefix.isEmpty) return;
     try {
-      await p.setInt(_kStars, _stars);
-      await p.setInt(_kUnlocked, _unlockedCount);
-      await p.setStringList(_kIntroduced, _introduced.toList());
-      await p.setString(_kMastery, jsonEncode(_mastery));
+      await p.setInt('$_prefix$_kStars', _stars);
+      await p.setInt('$_prefix$_kUnlocked', _unlockedCount);
+      await p.setStringList('$_prefix$_kIntroduced', _introduced.toList());
+      await p.setString('$_prefix$_kMastery', jsonEncode(_mastery));
     } catch (e) {
       debugPrint('Progress save failed: $e');
     }

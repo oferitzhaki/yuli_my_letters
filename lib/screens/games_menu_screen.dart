@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/hebrew_characters.dart';
 import '../services/progress_service.dart';
+import '../services/profile_service.dart';
 import 'choice_game_screen.dart';
 import 'letter_intro_screen.dart';
 import 'memory_screen.dart';
@@ -154,7 +155,7 @@ class GamesMenuScreen extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.deepOrange,
           foregroundColor: Colors.white,
-          title: const Text('בחרי משחק 🎮'),
+          title: Text(g('בחרי משחק 🎮', 'בחר משחק 🎮')),
           actions: [
             IconButton(
               tooltip: 'איפוס התקדמות (להורים)',
@@ -182,7 +183,7 @@ class GamesMenuScreen extends StatelessWidget {
                       _MenuCard(
                         emoji: '✨',
                         label: newCount > 0 ? 'חדש!' : 'חזרה',
-                        title: 'הכירי את האותיות',
+                        title: g('הכירי את האותיות', 'הכר את האותיות'),
                         subtitle: newCount > 0
                             ? 'יש $newCount אותיות חדשות להכיר'
                             : 'חוזרים על האותיות שלמדת',

@@ -14,6 +14,7 @@ import '../services/letter_audio.dart';
 import '../services/letter_recognizer.dart';
 import '../services/progress_service.dart';
 import '../widgets/round_complete_dialog.dart';
+import '../services/profile_service.dart';
 
 class WriteScreen extends StatefulWidget {
   const WriteScreen({super.key});
@@ -136,7 +137,7 @@ class _WriteScreenState extends State<WriteScreen> {
 
     if (_inkLength() < _side * 0.25) {
       if (!quietIfWrong) {
-        setState(() => _message = 'נסי לכתוב אות גדולה יותר 🙂');
+        setState(() => _message = g('נסי לכתוב אות גדולה יותר 🙂', 'נסה לכתוב אות גדולה יותר 🙂'));
       }
       return;
     }
@@ -172,7 +173,8 @@ class _WriteScreenState extends State<WriteScreen> {
       _hadFailure = true;
       _showHint = true;
       _strokes.clear();
-      _message = 'כמעט! הנה האות, נסי לכתוב אותה שוב';
+      _message = g('כמעט! הנה האות, נסי לכתוב אותה שוב',
+          'כמעט! הנה האות, נסה לכתוב אותה שוב');
     });
     _audio.playTryAgain().then((finished) {
       if (finished && mounted && !_done) _audio.playLetter(_current);
@@ -206,7 +208,7 @@ class _WriteScreenState extends State<WriteScreen> {
   Widget build(BuildContext context) {
     final text = _done
         ? '🎉 נכון! ${_current.letter}'
-        : _message ?? 'כתבי את האות ששמעת ✍️';
+        : _message ?? g('כתבי את האות ששמעת ✍️', 'כתוב את האות ששמעת ✍️');
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -297,7 +299,7 @@ class _WriteScreenState extends State<WriteScreen> {
                           onPressed: _done || !_ready ? null : _check,
                           icon: const Icon(Icons.check, size: 26),
                           label: Text(
-                            _ready ? 'בדקי' : 'מכין...',
+                            _ready ? g('בדקי', 'בדוק') : 'מכין...',
                             style: const TextStyle(fontSize: 20),
                           ),
                           style: FilledButton.styleFrom(
@@ -325,8 +327,8 @@ class _WriteScreenState extends State<WriteScreen> {
                         ElevatedButton.icon(
                           onPressed: () => _audio.playWritePrompt(_current),
                           icon: const Icon(Icons.volume_up),
-                          label: const Text('שמעי',
-                              style: TextStyle(fontSize: 17)),
+                          label: Text(g('שמעי', 'שמע'),
+                              style: const TextStyle(fontSize: 17)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.amber,
                             foregroundColor: Colors.black87,

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import '../constants/hebrew_characters.dart';
 import '../services/letter_audio.dart';
 import '../services/progress_service.dart';
+import '../services/profile_service.dart';
 
 class LetterIntroScreen extends StatefulWidget {
   const LetterIntroScreen({super.key});
@@ -75,8 +76,8 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
       builder: (dialogContext) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text(
-            '🎉 כל הכבוד יולי!',
+          title: Text(
+            '🎉 כל הכבוד ${ProfileService.instance.name}!',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 28),
           ),
@@ -109,7 +110,9 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
         appBar: AppBar(
           backgroundColor: Colors.green,
           foregroundColor: Colors.white,
-          title: Text('הכירי את האותיות · ${_index + 1}/${_letters.length}'),
+          title: Text(
+            '${g('הכירי', 'הכר')} את האותיות · ${_index + 1}/${_letters.length}',
+          ),
         ),
         body: SafeArea(
           child: LayoutBuilder(
@@ -193,8 +196,8 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                       ElevatedButton.icon(
                         onPressed: () => _audio.playLetterThenWord(_current),
                         icon: const Icon(Icons.volume_up, size: 28),
-                        label: const Text(
-                          'שמעי שוב',
+                        label: Text(
+                          g('שמעי שוב', 'שמע שוב'),
                           style: TextStyle(fontSize: 18),
                         ),
                         style: ElevatedButton.styleFrom(

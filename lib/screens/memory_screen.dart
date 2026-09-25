@@ -9,6 +9,7 @@ import '../constants/hebrew_characters.dart';
 import '../services/letter_audio.dart';
 import '../services/progress_service.dart';
 import '../widgets/round_complete_dialog.dart';
+import '../services/profile_service.dart';
 
 class _MemoryCard {
   _MemoryCard(this.character, this.isLetter);
@@ -186,6 +187,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
     );
   }
 
+  String _levelName(int i) =>
+      i == _levels.length - 1 ? g('אלופה', 'אלוף') : _levels[i].$1;
+
   Widget _buildLevelPicker() {
     final available = ProgressService.instance.playableLetters.length;
     final lastLevel = _levels.length - 1;
@@ -200,7 +204,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
             final pairs = min(_levels[i].$2, available);
             return ChoiceChip(
               label: Text(
-                enabled ? '${_levels[i].$1} · $pairs זוגות' : '${_levels[i].$1} 🔒',
+                enabled ? '${_levelName(i)} · $pairs זוגות' : '${_levelName(i)} 🔒',
                 style: const TextStyle(fontSize: 16),
               ),
               selected: _level == i,

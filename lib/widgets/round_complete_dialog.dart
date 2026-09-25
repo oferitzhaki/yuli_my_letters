@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../services/profile_service.dart';
+
 Future<void> showRoundCompleteDialog(
   BuildContext context, {
   required int score,
@@ -14,8 +16,8 @@ Future<void> showRoundCompleteDialog(
     builder: (dialogContext) => Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
-        title: const Text(
-          '🎉 כל הכבוד יולי!',
+        title: Text(
+          '🎉 כל הכבוד ${ProfileService.instance.name}!',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 28),
         ),
@@ -29,8 +31,8 @@ Future<void> showRoundCompleteDialog(
             ),
             if (unlockedNew) ...[
               const SizedBox(height: 16),
-              const Text(
-                '🎁 נפתחו אותיות חדשות!\nבואי להכיר אותן',
+              Text(
+                '🎁 נפתחו אותיות חדשות!\n${g('בואי', 'בוא')} להכיר אותן',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,

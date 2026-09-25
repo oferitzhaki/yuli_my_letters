@@ -16,6 +16,7 @@ import '../constants/hebrew_characters.dart';
 import '../services/letter_audio.dart';
 import '../services/progress_service.dart';
 import '../widgets/round_complete_dialog.dart';
+import '../services/profile_service.dart';
 
 // Lenient on purpose - she is 4. Raise these to make it stricter.
 const double _coverageGoal = 0.75;
@@ -309,8 +310,10 @@ class _TraceScreenState extends State<TraceScreen> {
                           _done
                               ? '🎉 נכון! ${_current.letter}'
                               : _offTrack
-                                  ? 'נסי לצייר רק על האות האפורה 🙂'
-                                  : 'ציירי על האות באצבע ✏️',
+                                  ? g('נסי לצייר רק על האות האפורה 🙂',
+                                      'נסה לצייר רק על האות האפורה 🙂')
+                                  : g('ציירי על האות באצבע ✏️',
+                                      'צייר על האות באצבע ✏️'),
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -376,8 +379,8 @@ class _TraceScreenState extends State<TraceScreen> {
                         ElevatedButton.icon(
                           onPressed: () => _audio.playLetter(_current),
                           icon: const Icon(Icons.volume_up),
-                          label: const Text(
-                            'שמעי',
+                          label: Text(
+                            g('שמעי', 'שמע'),
                             style: TextStyle(fontSize: 18),
                           ),
                           style: ElevatedButton.styleFrom(

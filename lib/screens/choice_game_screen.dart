@@ -11,6 +11,7 @@ import '../constants/hebrew_characters.dart';
 import '../services/letter_audio.dart';
 import '../services/progress_service.dart';
 import '../widgets/round_complete_dialog.dart';
+import '../services/profile_service.dart';
 
 typedef CharacterWidgetBuilder = Widget Function(HebrewCharacter c);
 typedef CharacterSound = Future<void> Function(
@@ -229,8 +230,8 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _playPrompt,
                           icon: const Icon(Icons.volume_up, size: 28),
-                          label: const Text(
-                            'שמעי שוב',
+                          label: Text(
+                            g('שמעי שוב', 'שמע שוב'),
                             style: TextStyle(fontSize: 18),
                           ),
                           style: ElevatedButton.styleFrom(
