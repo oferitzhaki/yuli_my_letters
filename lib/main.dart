@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
 import 'screens/profiles_screen.dart';
 import 'services/profile_service.dart';
 
@@ -43,9 +42,7 @@ class _StartState extends State<_Start> {
     if (ProfileService.instance.current != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
+        openChildHome(context);
       });
     }
   }

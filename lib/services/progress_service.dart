@@ -73,9 +73,15 @@ class ProgressService extends ChangeNotifier {
 
   // ---------- write ----------
 
-  /// Loads the progress of one child.
+  /// Keys of one child's progress. Hebrew keeps the original keys, so
+  /// progress saved before English existed is untouched; English has its own.
+  static String _prefixFor(String profileId, {required bool english}) =>
+      english ? 'p_${profileId}_en_' : 'p_${profileId}_';
+
+  /// Loads the progress of one child, in the language they learn now.
   Future<void> loadFor(String profileId) async {
-    _prefix = 'p_${profileId}_';
+    _prefix = _prefixFor(profileId,
+        english: ProfileService.instance.isEnglish);
     _stars = 0;
     _unlockedCount = groupSize;
     _introduced.clear();
@@ -127,8 +133,11 @@ class ProgressService extends ChangeNotifier {
 
   static Future<void> deleteFor(String id) async {
     final p = await SharedPreferences.getInstance();
-    for (final k in _allKeys) {
-      await p.remove('p_${id}_$k');
+    for (final english in [false, true]) {
+      final prefix = _prefixFor(id, english: english);
+      for (final k in _allKeys) {
+        await p.remove('$prefix$k');
+      }
     }
   }
 

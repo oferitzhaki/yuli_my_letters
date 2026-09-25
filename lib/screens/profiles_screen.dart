@@ -10,26 +10,29 @@ import 'register_screen.dart';
 
 const _avatars = ['🦁', '🦊', '🐼', '🐯', '🐨', '🐸', '🐵', '🦄'];
 
+/// Opens the selected child's home. However that screen is left (the
+/// "switch child" button or the phone's back gesture), the child is
+/// signed out, so "who is playing?" always shows in the app's language.
+void openChildHome(BuildContext context) {
+  Navigator.of(context)
+      .push(MaterialPageRoute(builder: (_) => const HomeScreen()))
+      .then((_) => ProfileService.instance.signOut());
+}
+
 class ProfilesScreen extends StatelessWidget {
   const ProfilesScreen({super.key});
 
   Future<void> _open(BuildContext context, ChildProfile p) async {
     await ProfileService.instance.select(p.id);
     if (!context.mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    openChildHome(context);
   }
 
   Future<void> _add(BuildContext context) async {
     final added = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const RegisterScreen()),
     );
-    if (added == true && context.mounted) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    }
+    if (added == true && context.mounted) openChildHome(context);
   }
 
   Future<void> _manage(BuildContext context, ChildProfile p) async {

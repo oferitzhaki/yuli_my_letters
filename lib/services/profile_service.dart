@@ -194,6 +194,7 @@ class ProfileService extends ChangeNotifier {
     String? voiceMime,
     bool removeVoice = false,
   }) async {
+    final languageChanged = profile.language != language;
     profile.name = name.trim();
     profile.isBoy = isBoy;
     profile.language = language;
@@ -207,6 +208,8 @@ class ProfileService extends ChangeNotifier {
     await _saveProfiles();
     if (profile.id == _currentId) {
       _voiceUrl = _prefs?.getString(_voiceKey(profile.id));
+      // Switch to that language's own progress.
+      if (languageChanged) await ProgressService.instance.loadFor(profile.id);
     }
     notifyListeners();
   }

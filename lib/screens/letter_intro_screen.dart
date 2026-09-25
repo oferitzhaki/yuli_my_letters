@@ -114,7 +114,7 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
           backgroundColor: Colors.green,
           foregroundColor: Colors.white,
           title: Text(
-            '${tr('${g('הכירי', 'הכר')} את האותיות', 'Meet the Letters')} · ${_index + 1}/${_letters.length}',
+            '${tr(g('הכירי את האותיות', 'הכר את האותיות'), 'Meet the Letters')} · ${_index + 1}/${_letters.length}',
           ),
         ),
         body: SafeArea(

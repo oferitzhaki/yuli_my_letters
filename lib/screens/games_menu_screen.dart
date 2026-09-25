@@ -199,14 +199,14 @@ class GamesMenuScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      for (final g in games) ...[
+                      for (final game in games) ...[
                         const SizedBox(height: 16),
                         _MenuCard(
-                          emoji: g.emoji,
-                          label: tr('שלב ${g.level}', 'Level ${g.level}'),
-                          title: g.title,
-                          subtitle: g.subtitle,
-                          color: g.color,
+                          emoji: game.emoji,
+                          label: tr('שלב ${game.level}', 'Level ${game.level}'),
+                          title: game.title,
+                          subtitle: game.subtitle,
+                          color: game.color,
                           enabled: gamesOpen,
                           onTap: () {
                             if (!gamesOpen) {
@@ -224,7 +224,7 @@ class GamesMenuScreen extends StatelessWidget {
                             }
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: g.builder),
+                              MaterialPageRoute(builder: game.builder),
                             );
                           },
                         ),
