@@ -40,6 +40,7 @@ PHRASES = [
     ("fb_round", "כָּל הַכָּבוֹד יוּלִי! סִיַּמְתְּ אֶת הַסִּבּוּב!"),
     ("fb_unlock", "יוּלִי, נִפְתְּחוּ לָךְ אוֹתִיּוֹת חֲדָשׁוֹת!"),
     ("fb_intro_done", "כָּל הַכָּבוֹד יוּלִי! עַכְשָׁו אֶפְשָׁר לְשַׂחֵק"),
+    ("fb_write", "כִּתְבִי אֶת הָאוֹת"),
 ]
 
 OUTPUT_DIR = "assets/audio"
@@ -60,17 +61,17 @@ def main():
         language_code="he-IL",
         name="he-IL-Wavenet-A",
     )
-    audio_config = texttospeech.AudioConfig(
-        audio_encoding=texttospeech.AudioEncoding.MP3,
-        speaking_rate=0.8,  # a bit slower for kids
-    )
+    # Letters and words a bit slower for clarity; feedback at normal pace
+    # so praise comes quickly.
+    LEARN_RATE = 0.8
+    FEEDBACK_RATE = 1.05
 
-    jobs = [(f"{i}.mp3", t) for i, t in LETTERS] + \
-           [(f"animal_{i}.mp3", t) for i, t in ANIMALS] + \
-           [(f"{n}.mp3", t) for n, t in PHRASES]
+    jobs = [(f"{i}.mp3", t, LEARN_RATE) for i, t in LETTERS] + \
+           [(f"animal_{i}.mp3", t, LEARN_RATE) for i, t in ANIMALS] + \
+           [(f"{n}.mp3", t, FEEDBACK_RATE) for n, t in PHRASES]
 
     made = skipped = failed = 0
-    for filename, text in jobs:
+    for filename, text, rate in jobs:
         path = os.path.join(OUTPUT_DIR, filename)
         if os.path.exists(path):
             skipped += 1
@@ -79,7 +80,10 @@ def main():
             response = client.synthesize_speech(
                 input=texttospeech.SynthesisInput(text=text),
                 voice=voice,
-                audio_config=audio_config,
+                audio_config=texttospeech.AudioConfig(
+                    audio_encoding=texttospeech.AudioEncoding.MP3,
+                    speaking_rate=rate,
+                ),
             )
             with open(path, "wb") as out:
                 out.write(response.audio_content)

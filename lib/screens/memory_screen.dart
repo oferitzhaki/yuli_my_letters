@@ -91,7 +91,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
       _audio.playLetterThenPraise(first.character);
 
       if (_cards.every((c) => c.matched)) {
-        Future.delayed(const Duration(milliseconds: 2800), () {
+        Future.delayed(const Duration(milliseconds: 1800), () {
           if (!mounted) return;
           _audio.playRoundDone();
           showRoundCompleteDialog(
@@ -103,7 +103,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
       }
     } else {
       _busy = true;
-      Future.delayed(const Duration(milliseconds: 1200), () {
+      Future.delayed(const Duration(milliseconds: 900), () {
         if (!mounted) return;
         setState(() {
           first.faceUp = false;

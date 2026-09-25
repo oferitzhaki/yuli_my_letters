@@ -241,7 +241,7 @@ class _TraceScreenState extends State<TraceScreen> {
   Future<void> _advanceAfter(Future<bool> feedback) async {
     await Future.wait<Object?>([
       feedback,
-      Future<void>.delayed(const Duration(milliseconds: 1500)),
+      Future<void>.delayed(const Duration(milliseconds: 800)),
     ]);
     if (!mounted) return;
     if (_index + 1 >= _roundLetters.length) {

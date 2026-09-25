@@ -9,6 +9,7 @@ import 'choice_game_screen.dart';
 import 'letter_intro_screen.dart';
 import 'memory_screen.dart';
 import 'trace_screen.dart';
+import 'write_screen.dart';
 
 const TextStyle _promptLetter = TextStyle(
   fontSize: 130,
@@ -103,6 +104,14 @@ List<_GameInfo> _games() => [
         subtitle: 'מציירים את האות באצבע',
         color: Colors.indigo,
         builder: (_) => const TraceScreen(),
+      ),
+      _GameInfo(
+        level: 6,
+        emoji: '✍️',
+        title: 'כתיבה חופשית',
+        subtitle: 'שומעים אות וכותבים אותה לבד',
+        color: Colors.pink,
+        builder: (_) => const WriteScreen(),
       ),
     ];
 

@@ -120,7 +120,7 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
   Future<void> _advanceAfter(Future<bool> feedback) async {
     await Future.wait<Object?>([
       feedback,
-      Future<void>.delayed(const Duration(milliseconds: 1500)),
+      Future<void>.delayed(const Duration(milliseconds: 800)),
     ]);
     _nextQuestion();
   }

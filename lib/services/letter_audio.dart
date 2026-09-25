@@ -52,6 +52,10 @@ class LetterAudio {
         if (unlocked) 'assets/audio/fb_unlock.mp3',
       ]);
 
+  /// "כתבי את האות ... בֵּית"
+  Future<bool> playWritePrompt(HebrewCharacter c) =>
+      _sequence(['assets/audio/fb_write.mp3', _letter(c)]);
+
   Future<bool> playIntroDone() =>
       _sequence(['assets/audio/fb_intro_done.mp3']);
 
@@ -66,7 +70,7 @@ class LetterAudio {
     final token = ++_token;
     for (var i = 0; i < assets.length; i++) {
       if (i > 0) {
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(const Duration(milliseconds: 120));
         if (token != _token) return false;
       }
       await _playToEnd(assets[i]);
