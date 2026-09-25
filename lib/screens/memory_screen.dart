@@ -27,7 +27,10 @@ class MemoryScreen extends StatefulWidget {
 }
 
 class _MemoryScreenState extends State<MemoryScreen> {
-  static const int pairs = 4;
+  // Difficulty: name and number of pairs. "אלופה" = as many as she can
+  // get (limited by the letters she has already met, up to 12 pairs).
+  static const _levels = [('קל', 4), ('בינוני', 6), ('קשה', 8), ('אלופה', 12)];
+  int _level = 3; // start at the hardest available
   static const int pointsPerPair = 5;
 
   final LetterAudio _audio = LetterAudio();
@@ -53,6 +56,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
   void _newGame() {
     final pool = List.of(ProgressService.instance.playableLetters)
       ..shuffle(_random);
+    final pairs = min(_levels[_level].$2, pool.length);
     final letters = pool.take(pairs);
     _cards = [
       for (final c in letters) ...[_MemoryCard(c, true), _MemoryCard(c, false)],
@@ -137,38 +141,104 @@ class _MemoryScreenState extends State<MemoryScreen> {
           ],
         ),
         body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: Column(
-                  children: [
-                    const Text(
-                      'מצאי כל אות עם התמונה שלה',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    GridView.count(
-                      crossAxisCount: 4,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.8,
-                      children: _cards.map(_buildCard).toList(),
-                    ),
-                  ],
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                _buildLevelPicker(),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const gap = 10.0;
+                      final layout = _bestLayout(
+                        _cards.length,
+                        constraints.maxWidth,
+                        constraints.maxHeight,
+                        gap,
+                      );
+                      return Center(
+                        child: SizedBox(
+                          width: layout.cols * layout.w +
+                              (layout.cols - 1) * gap,
+                          child: Wrap(
+                            spacing: gap,
+                            runSpacing: gap,
+                            children: [
+                              for (final card in _cards)
+                                SizedBox(
+                                  width: layout.w,
+                                  height: layout.h,
+                                  child: _buildCard(card),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildLevelPicker() {
+    final available = ProgressService.instance.playableLetters.length;
+    final lastLevel = _levels.length - 1;
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (var i = 0; i < _levels.length; i++)
+          Builder(builder: (context) {
+            final enabled = i == lastLevel || _levels[i].$2 <= available;
+            final pairs = min(_levels[i].$2, available);
+            return ChoiceChip(
+              label: Text(
+                enabled ? '${_levels[i].$1} · $pairs זוגות' : '${_levels[i].$1} 🔒',
+                style: const TextStyle(fontSize: 16),
+              ),
+              selected: _level == i,
+              onSelected: enabled
+                  ? (_) => setState(() {
+                        _level = i;
+                        _newGame();
+                      })
+                  : null,
+            );
+          }),
+      ],
+    );
+  }
+
+  /// Picks the number of columns that gives the biggest cards
+  /// while fitting every card on screen without scrolling.
+  ({int cols, double w, double h}) _bestLayout(
+    int count,
+    double maxW,
+    double maxH,
+    double gap,
+  ) {
+    const aspect = 0.8; // card width / height
+    var best = (cols: 2, w: 0.0, h: 0.0);
+    for (var cols = 2; cols <= 8; cols++) {
+      final rows = (count / cols).ceil();
+      var w = (maxW - gap * (cols - 1)) / cols;
+      var h = (maxH - gap * (rows - 1)) / rows;
+      if (w <= 0 || h <= 0) continue;
+      if (w / h > aspect) {
+        w = h * aspect;
+      } else {
+        h = w / aspect;
+      }
+      if (w > best.w) best = (cols: cols, w: w, h: h);
+    }
+    return best;
   }
 
   Widget _buildCard(_MemoryCard card) {
