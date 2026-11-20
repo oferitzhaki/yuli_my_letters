@@ -109,4 +109,40 @@ const Map<String, String> romanianTexts = {
       "🎁 Litere noi deblocate!\nHai să le cunoaștem",
   "Meet the new letters 🎁": "Cunoaște literele noi 🎁",
   "Play again 🔄": "Încă o rundă 🔄",
+
+  // ---------- harder games ----------
+  "Lookalike Letters":
+      "Litere asemănătoare",
+  "Find the letter among letters that look alike":
+      "Găsește litera printre litere care seamănă",
+  "Last Letter":
+      "Ultima literă",
+  "Which letter does the word end with?":
+      "Cu ce literă se termină cuvântul?",
+  "Build a Word":
+      "Construiește cuvântul",
+  "Put the letters in order":
+      "Pune literele în ordine",
+  "Tap the letters in order":
+      "Apasă literele în ordine",
+  "Big & Small Letters":
+      "Litere mari și mici",
+  "Find the small letter":
+      "Găsește litera mică",
+  "Which is the small letter?":
+      "Care este litera mică?",
+  "Vowel Marks":
+      "Semnele vocalelor",
+  "Hear a sound and pick it: בָּ בִּ בּוּ":
+      "Ascultă un sunet și alege-l: בָּ בִּ בּוּ",
+  "Which sound did you hear?":
+      "Ce sunet ai auzit?",
+  "Balloons":
+      "Baloane",
+  "Pop the balloon with the letter you hear":
+      "Sparge balonul cu litera pe care o auzi",
+  "It flew away! Try again 🎈":
+      "A zburat! Mai încearcă 🎈",
+  "Learn a few more letters to play this ✨":
+      "Mai învață câteva litere ca să joci asta ✨",
 };

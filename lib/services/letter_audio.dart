@@ -6,6 +6,8 @@
 //   translations  tr_<lang>_<id>.mp3  ("leu" for אריה)
 //   feedback      fb_*.mp3 (Hebrew, girl/boy forms), fb_en_*.mp3, fb_ro_*.mp3
 // plus the child's name as recorded by a parent. Missing files fail silently.
+// The word games also use word_<id>.mp3 (short words), final_<x>.mp3
+// (final letter names, e.g. "כָּף סוֹפִית") and syl_<id>.mp3 (syllables).
 
 import 'dart:async';
 import 'dart:math';
@@ -14,6 +16,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../constants/hebrew_characters.dart';
+import '../constants/words.dart';
 import 'profile_service.dart';
 
 class LetterAudio {
@@ -41,6 +44,37 @@ class LetterAudio {
     _token++;
     return _play(url);
   }
+
+  // ---------- word games ----------
+
+  static String wordAsset(String wordId) => 'assets/audio/word_$wordId.mp3';
+  static String syllableAsset(String syllableId) =>
+      'assets/audio/syl_$syllableId.mp3';
+  static String letterAsset(HebrewCharacter c) => 'assets/audio/${c.id}.mp3';
+
+  /// The name of a written letter: a regular letter (א / A) or a Hebrew
+  /// final letter ("כָּף סוֹפִית"). Null if there is no recording.
+  static String? letterNameAsset(String letter, HebrewCharacter? c) {
+    final finalId = finalLetterIds[letter];
+    if (finalId != null) return 'assets/audio/$finalId.mp3';
+    return c == null ? null : letterAsset(c);
+  }
+
+  /// Plays one sound file.
+  Future<void> playAsset(String asset) {
+    _token++;
+    return _play(asset);
+  }
+
+  /// Plays sound files one after another.
+  Future<bool> playAll(List<String> assets) => _sequence(assets);
+
+  /// Plays sound files one after another, then praise.
+  Future<bool> playThenPraise(List<String> assets) => _sequence([
+        ...assets,
+        if (_name != null && _random.nextBool()) _name!,
+        _praise(),
+      ]);
 
   // ---------- sequences (complete when done or interrupted) ----------
 

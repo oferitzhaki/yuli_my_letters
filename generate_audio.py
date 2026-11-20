@@ -109,6 +109,54 @@ HE_TRANSLATIONS = {
 }
 
 TRANSLATIONS_FILE = "lib/constants/translations.dart"
+WORDS_FILE = "lib/constants/words.dart"
+LETTERS_FILE = "lib/constants/hebrew_characters.dart"
+
+# ---------- word games ----------
+# Final letter names (ids match finalLetterIds in words.dart).
+FINAL_LETTERS = [
+    ("final_kaf", "כָּף סוֹפִית"),
+    ("final_mem", "מֵם סוֹפִית"),
+    ("final_nun", "נוּן סוֹפִית"),
+    ("final_pe", "פֵּא סוֹפִית"),
+    ("final_tsadi", "צָדִי סוֹפִית"),
+]
+
+
+def read_words():
+    """[(id, spoken, lang)] from words.dart; English ids start with en_."""
+    text = open(WORDS_FILE, encoding="utf-8").read()
+    found = re.findall(r"WordItem\('(\w+)', '[^']+', '[^']+', '([^']+)'", text)
+    return [(i, spoken, "en" if i.startswith("en_") else "he") for i, spoken in found]
+
+
+# Syllables: SAME rules as syllableText() in lib/constants/syllables.dart.
+DAGESH, SHIN_DOT = "\u05BC", "\u05C1"
+VOWEL_MARKS = {
+    "a": "\u05B8",          # kamatz
+    "e": "\u05B5",          # tsere
+    "i": "\u05B4",          # hiriq
+    "o": "\u05D5\u05B9",    # holam male  וֹ
+    "u": "\u05D5\u05BC",    # shuruk  וּ
+}
+
+
+def read_syllables():
+    """[(syl_<letterId>_<vowel>, text)] for every Hebrew letter except ו."""
+    text = open(LETTERS_FILE, encoding="utf-8").read()
+    letters = re.findall(r"id: '(\w+)',\s*letter: '(.)'", text)
+    out = []
+    for letter_id, letter in letters:
+        if letter_id == "vav":
+            continue
+        base = letter
+        if letter_id in ("bet", "kaf", "pe"):
+            base += DAGESH
+        elif letter_id == "shin":
+            base += SHIN_DOT
+        for vowel, mark in VOWEL_MARKS.items():
+            out.append((f"syl_{letter_id}_{vowel}", base + mark))
+    return out
 
 
 def read_translations():
@@ -163,6 +211,8 @@ def main():
 
     voices = pick_voices(client)
     translations = read_translations()
+    words = read_words()
+    syllables = read_syllables()
     # Letters and words a bit slower for clarity; feedback at normal pace
     # so praise comes quickly.
     LEARN_RATE = 0.8
@@ -181,7 +231,10 @@ def main():
            [(f"tr_{lang}_{i}.mp3", w, LEARN_RATE, lang, False)
             for (lang, i), w in sorted(translations.items())] + \
            [(f"tr_he_{i}.mp3", w, LEARN_RATE, "he", False)
-            for i, w in HE_TRANSLATIONS.items()]
+            for i, w in HE_TRANSLATIONS.items()] + \
+           [(f"word_{i}.mp3", w, LEARN_RATE, lang, False) for i, w, lang in words] + \
+           [(f"{n}.mp3", t, LEARN_RATE, "he", False) for n, t in FINAL_LETTERS] + \
+           [(f"{n}.mp3", t, LEARN_RATE, "he", False) for n, t in syllables]
 
     made = skipped = failed = 0
     for filename, text, rate, lang, is_ssml in jobs:

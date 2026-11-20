@@ -1,7 +1,9 @@
 // lib/screens/choice_game_screen.dart
 // Shared engine for the "one prompt, four choices" games.
 // Each game only decides what the prompt and the options look like,
-// and which sound the prompt plays.
+// and which sound the prompt plays. A game can also choose the wrong
+// answers (e.g. only lookalike letters) and whether it counts towards
+// unlocking new letters.
 
 import 'dart:math';
 
@@ -16,6 +18,7 @@ import '../services/profile_service.dart';
 typedef CharacterWidgetBuilder = Widget Function(HebrewCharacter c);
 typedef CharacterSound = Future<void> Function(
     LetterAudio audio, HebrewCharacter c);
+typedef DistractorPicker = List<HebrewCharacter> Function(HebrewCharacter c);
 
 class ChoiceGameScreen extends StatefulWidget {
   const ChoiceGameScreen({
@@ -27,6 +30,8 @@ class ChoiceGameScreen extends StatefulWidget {
     required this.playPrompt,
     this.questionsPerRound = 5,
     this.pointsPerCorrect = 5,
+    this.distractorsFor,
+    this.countsForProgress = true,
   });
 
   final String title;
@@ -36,6 +41,13 @@ class ChoiceGameScreen extends StatefulWidget {
   final CharacterSound playPrompt;
   final int questionsPerRound;
   final int pointsPerCorrect;
+
+  /// Preferred wrong answers for a letter (e.g. lookalikes). Topped up with
+  /// random known letters if there are fewer than three.
+  final DistractorPicker? distractorsFor;
+
+  /// Whether right/wrong answers here count towards unlocking new letters.
+  final bool countsForProgress;
 
   @override
   State<ChoiceGameScreen> createState() => _ChoiceGameScreenState();
@@ -84,11 +96,17 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
   }
 
   void _prepareQuestion() {
-    final others = _progress.playableLetters
+    final preferred = (widget.distractorsFor?.call(_current) ?? const <HebrewCharacter>[])
         .where((c) => c.id != _current.id)
         .toList()
       ..shuffle(_random);
-    _options = [_current, ...others.take(3)]..shuffle(_random);
+    final wrong = preferred.take(3).toList();
+    final others = _progress.playableLetters
+        .where((c) => c.id != _current.id && !wrong.any((w) => w.id == c.id))
+        .toList()
+      ..shuffle(_random);
+    wrong.addAll(others.take(3 - wrong.length));
+    _options = [_current, ...wrong]..shuffle(_random);
     _wrongPicks.clear();
     _answeredCorrectly = false;
     WidgetsBinding.instance.addPostFrameCallback((_) => _playPrompt());
@@ -105,7 +123,8 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
     if (option.id == _current.id) {
       final firstTry = _wrongPicks.isEmpty;
       _progress.addStars(widget.pointsPerCorrect);
-      if (_progress.recordCorrect(_current.id, firstTry: firstTry)) {
+      if (widget.countsForProgress &&
+          _progress.recordCorrect(_current.id, firstTry: firstTry)) {
         _unlockedThisRound = true;
       }
       setState(() {
@@ -114,7 +133,9 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
       });
       _advanceAfter(_audio.playLetterThenPraise(_current));
     } else {
-      if (_wrongPicks.isEmpty) _progress.recordMistake(_current.id);
+      if (widget.countsForProgress && _wrongPicks.isEmpty) {
+        _progress.recordMistake(_current.id);
+      }
       setState(() => _wrongPicks.add(option.id));
       // "Almost! Try again", then the question again as a hint.
       _audio.playTryAgain().then((finished) {
