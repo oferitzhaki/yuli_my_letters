@@ -95,6 +95,7 @@ const Map<String, String> romanianTexts = {
   "This device can't record": "Acest dispozitiv nu poate înregistra",
   "Recording failed": "Înregistrarea nu a reușit",
   "Too short, please try again": "Prea scurt, încercați din nou",
+  "One moment...": "O clipă...",
   "🎙️ Record the child's name (optional)":
       "🎙️ Înregistrați numele copilului (opțional)",
   "Tap, say the name out loud, and tap again. The app will use it when praising.":

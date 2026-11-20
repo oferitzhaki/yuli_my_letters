@@ -1,8 +1,9 @@
 // lib/widgets/name_recorder.dart
 // Records the child's name in a parent's voice (up to 4 seconds).
-// The microphone audio is collected straight into memory and turned into
-// a small WAV file, so it works the same on Android and in the browser
-// (iPhone/iPad via Safari) without temporary files.
+// On Android the microphone audio is collected straight into memory and
+// turned into a small WAV file. In the browser (iPhone/iPad via Safari)
+// the browser's own recorder is used instead (m4a on Safari, webm on
+// Chrome), because Safari can hang on the live-audio route.
 
 import 'dart:async';
 import 'dart:convert';
@@ -13,6 +14,7 @@ import 'package:record/record.dart';
 
 import '../services/letter_audio.dart';
 import '../services/profile_service.dart';
+import 'blob_bytes_stub.dart' if (dart.library.js_interop) 'blob_bytes_web.dart';
 
 class RecordedName {
   RecordedName(this.bytes, this.mime);
@@ -47,7 +49,9 @@ class _NameRecorderState extends State<NameRecorder> {
   StreamSubscription<Uint8List>? _stream;
   final List<int> _pcm = [];
   Timer? _autoStop;
+  bool _starting = false;
   bool _recording = false;
+  String _webMime = 'audio/mp4';
   String? _url;
   String? _error;
 
@@ -67,58 +71,106 @@ class _NameRecorderState extends State<NameRecorder> {
   }
 
   Future<void> _start() async {
-    setState(() => _error = null);
+    if (_starting || _recording) return;
+    setState(() {
+      _error = null;
+      _starting = true;
+    });
     try {
-      if (!await _recorder.hasPermission()) {
+      // In the browser start() asks for the microphone itself; asking twice
+      // in a row can leave Safari on iPhone stuck.
+      if (!kIsWeb && !await _recorder.hasPermission()) {
         setState(() => _error =
             tr('צריך לאשר גישה למיקרופון', 'Please allow microphone access'));
         return;
       }
-      if (!await _recorder.isEncoderSupported(AudioEncoder.pcm16bits)) {
-        setState(() =>
-            _error = tr('המכשיר לא תומך בהקלטה', "This device can't record"));
-        return;
+      if (kIsWeb) {
+        await _startWeb().timeout(const Duration(seconds: 20));
+      } else {
+        await _startStream().timeout(const Duration(seconds: 6));
       }
-      _pcm.clear();
-      final stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: _sampleRate,
-          numChannels: 1,
-        ),
-      );
-      _stream = stream.listen(_pcm.addAll);
+      if (!mounted) return;
       setState(() => _recording = true);
       _autoStop = Timer(maxLength, _stop);
     } catch (e) {
-      setState(() => _error = tr('ההקלטה לא הצליחה', 'Recording failed'));
+      if (mounted) {
+        setState(() =>
+            _error = '${tr('ההקלטה לא הצליחה', 'Recording failed')}\n($e)');
+      }
       debugPrint('Record start failed: $e');
+      try {
+        await _recorder.cancel();
+      } catch (_) {}
+    } finally {
+      if (mounted) setState(() => _starting = false);
     }
+  }
+
+  /// Browser: the built-in recorder. Safari makes m4a (AAC), Chrome webm.
+  Future<void> _startWeb() async {
+    var encoder = AudioEncoder.aacLc;
+    _webMime = 'audio/mp4';
+    if (!await _recorder.isEncoderSupported(encoder)) {
+      encoder = AudioEncoder.opus;
+      _webMime = 'audio/webm';
+    }
+    await _recorder.start(
+      RecordConfig(encoder: encoder, numChannels: 1),
+      path: '',
+    );
+  }
+
+  /// Android: raw samples into memory, wrapped as WAV when done.
+  Future<void> _startStream() async {
+    if (!await _recorder.isEncoderSupported(AudioEncoder.pcm16bits)) {
+      throw 'pcm16bits not supported';
+    }
+    _pcm.clear();
+    final stream = await _recorder.startStream(
+      const RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: _sampleRate,
+        numChannels: 1,
+      ),
+    );
+    _stream = stream.listen(_pcm.addAll);
   }
 
   Future<void> _stop() async {
     _autoStop?.cancel();
     if (!_recording) return;
     try {
-      await _recorder.stop();
+      final blobUrl = await _recorder.stop();
       await _stream?.cancel();
       _stream = null;
       setState(() => _recording = false);
 
-      // Less than a quarter of a second = nothing was really said.
-      if (_pcm.length < _sampleRate ~/ 2) {
-        setState(() => _error =
-            tr('ההקלטה קצרה מדי, נסו שוב', 'Too short, please try again'));
-        return;
+      final RecordedName recorded;
+      if (kIsWeb) {
+        final bytes = blobUrl == null ? null : await readBlobUrl(blobUrl);
+        // A few hundred bytes = nothing was really recorded.
+        if (bytes == null || bytes.length < 1000) {
+          setState(() => _error =
+              tr('ההקלטה קצרה מדי, נסו שוב', 'Too short, please try again'));
+          return;
+        }
+        recorded = RecordedName(bytes, _webMime);
+      } else {
+        // Less than a quarter of a second = nothing was really said.
+        if (_pcm.length < _sampleRate ~/ 2) {
+          setState(() => _error =
+              tr('ההקלטה קצרה מדי, נסו שוב', 'Too short, please try again'));
+          return;
+        }
+        recorded = RecordedName(_toWav(_pcm), 'audio/wav');
       }
-      final recorded = RecordedName(_toWav(_pcm), 'audio/wav');
       setState(() => _url = recorded.dataUrl);
       widget.onRecorded(recorded);
       _audio.playUrl(recorded.dataUrl);
     } catch (e) {
       setState(() {
         _recording = false;
-        _error = tr('ההקלטה לא הצליחה', 'Recording failed');
+        _error = '${tr('ההקלטה לא הצליחה', 'Recording failed')}\n($e)';
       });
       debugPrint('Record stop failed: $e');
     }
@@ -182,10 +234,12 @@ class _NameRecorderState extends State<NameRecorder> {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: _recording ? _stop : _start,
+                onPressed: _starting ? null : (_recording ? _stop : _start),
                 icon: Icon(_recording ? Icons.stop : Icons.mic),
                 label: Text(
-                  _recording
+                  _starting
+                      ? tr('רגע...', 'One moment...')
+                      : _recording
                       ? tr('עצירה', 'Stop')
                       : _url == null
                           ? tr('הקלטה', 'Record')
