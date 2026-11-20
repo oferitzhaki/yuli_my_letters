@@ -46,12 +46,14 @@ class ProfilesScreen extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.edit),
-                title: Text(tr('עריכת הפרטים של ${p.name}', 'Edit ${p.name}')),
+                title: Text(tr('עריכת הפרטים של ${p.name}', 'Edit ${p.name}',
+                    'Modifică: ${p.name}')),
                 onTap: () => Navigator.pop(sheetContext, 'edit'),
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: Text(tr('מחיקת ${p.name}', 'Delete ${p.name}')),
+                title: Text(tr('מחיקת ${p.name}', 'Delete ${p.name}',
+                    'Șterge: ${p.name}')),
                 onTap: () => Navigator.pop(sheetContext, 'delete'),
               ),
             ],
@@ -70,7 +72,8 @@ class ProfilesScreen extends StatelessWidget {
         builder: (dialogContext) => Directionality(
           textDirection: appDirection,
           child: AlertDialog(
-            title: Text(tr('למחוק את ${p.name}?', 'Delete ${p.name}?')),
+            title: Text(tr('למחוק את ${p.name}?', 'Delete ${p.name}?',
+                'Ștergi profilul „${p.name}”?')),
             content: Text(tr('כל הכוכבים וההתקדמות יימחקו לצמיתות.',
                 'All stars and progress will be deleted for good.')),
             actions: [
@@ -121,13 +124,32 @@ class ProfilesScreen extends StatelessWidget {
                   child: ListView(
                     padding: const EdgeInsets.all(24),
                     children: [
+                      // The app's own language (each child keeps theirs).
                       Align(
                         alignment: AlignmentDirectional.centerEnd,
-                        child: TextButton.icon(
-                          onPressed: () => service
-                              .setUiLanguage(service.isEnglish ? 'he' : 'en'),
-                          icon: const Icon(Icons.language),
-                          label: Text(service.isEnglish ? 'עברית' : 'English'),
+                        child: PopupMenuButton<String>(
+                          tooltip: tr('שפת האפליקציה', 'App language'),
+                          onSelected: service.setUiLanguage,
+                          itemBuilder: (_) => [
+                            for (final lang in uiLanguages)
+                              CheckedPopupMenuItem<String>(
+                                value: lang,
+                                checked: lang == service.appLanguage,
+                                child: Text(uiLanguageNames[lang]!),
+                              ),
+                          ],
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.language),
+                                const SizedBox(width: 6),
+                                Text(uiLanguageNames[service.appLanguage]!,
+                                    style: const TextStyle(fontSize: 16)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       Text(
@@ -161,8 +183,7 @@ class ProfilesScreen extends StatelessWidget {
                               profile: profiles[i],
                               avatar: _avatars[i % _avatars.length],
                               onTap: () => _open(context, profiles[i]),
-                              onLongPress: () =>
-                                  _manage(context, profiles[i]),
+                              onLongPress: () => _manage(context, profiles[i]),
                             ),
                           _AddCard(onTap: () => _add(context)),
                         ],
@@ -230,8 +251,15 @@ class _ProfileCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                // What they learn, and the language the app speaks to them
+                // when it is different (e.g. "אבג · RO").
                 Text(
-                  profile.isEnglish ? 'ABC' : 'אבג',
+                  [
+                    profile.learnsEnglish ? 'ABC' : 'אבג',
+                    if (profile.uiLanguage != profile.language)
+                      profile.uiLanguage.toUpperCase(),
+                  ].join(' · '),
+                  textDirection: TextDirection.ltr,
                   style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
                 if (profile.hasVoice)
@@ -279,7 +307,6 @@ class _AddCard extends StatelessWidget {
   }
 }
 
-
 /// Shown once, on the very first launch.
 class _LanguageChooser extends StatelessWidget {
   const _LanguageChooser();
@@ -315,7 +342,7 @@ class _LanguageChooser extends StatelessWidget {
             const Text('🔤', style: TextStyle(fontSize: 72)),
             const SizedBox(height: 12),
             const Text(
-              'בחרו שפה · Choose a language',
+              'בחרו שפה · Choose a language · Alegeți limba',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
@@ -323,6 +350,8 @@ class _LanguageChooser extends StatelessWidget {
             choice('עברית', 'לומדים אותיות בעברית', 'he'),
             const SizedBox(height: 16),
             choice('English', 'Learn the English ABC', 'en'),
+            const SizedBox(height: 16),
+            choice('Română', 'Învățăm literele ebraice', 'ro'),
           ],
         ),
       ),

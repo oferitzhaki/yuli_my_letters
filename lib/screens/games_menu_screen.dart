@@ -51,7 +51,8 @@ List<_GameInfo> _games() => [
         color: Colors.orange,
         builder: (_) => ChoiceGameScreen(
           title: tr('רואים ומתאימים', 'See & Match'),
-          instruction: tr('מה מתחיל באות הזו?', 'What starts with this letter?'),
+          instruction:
+              tr('מה מתחיל באות הזו?', 'What starts with this letter?'),
           promptBuilder: (c) => Text(c.letter, style: _promptLetter),
           optionBuilder: (c) => Text(c.emoji, style: _optionEmoji),
           playPrompt: (audio, c) => audio.playLetter(c),
@@ -79,11 +80,13 @@ List<_GameInfo> _games() => [
         level: 3,
         emoji: '🔤',
         title: tr('באיזו אות מתחיל?', 'First Letter'),
-        subtitle: tr('רואים תמונה ובוחרים אות', 'See a picture, pick its letter'),
+        subtitle:
+            tr('רואים תמונה ובוחרים אות', 'See a picture, pick its letter'),
         color: Colors.teal,
         builder: (_) => ChoiceGameScreen(
           title: tr('באיזו אות מתחיל?', 'First Letter'),
-          instruction: tr('באיזו אות זה מתחיל?', 'Which letter does it start with?'),
+          instruction:
+              tr('באיזו אות זה מתחיל?', 'Which letter does it start with?'),
           promptBuilder: (c) => Text(c.emoji, style: _promptEmoji),
           optionBuilder: (c) => Text(c.letter, style: _optionLetter),
           playPrompt: (audio, c) => audio.playAnimal(c),
@@ -93,7 +96,8 @@ List<_GameInfo> _games() => [
         level: 4,
         emoji: '🧠',
         title: tr('משחק זיכרון', 'Memory Game'),
-        subtitle: tr('מוצאים זוגות של אות ותמונה', 'Match letters and pictures'),
+        subtitle:
+            tr('מוצאים זוגות של אות ותמונה', 'Match letters and pictures'),
         color: Colors.purple,
         builder: (_) => const MemoryScreen(),
       ),
@@ -101,7 +105,8 @@ List<_GameInfo> _games() => [
         level: 5,
         emoji: '✏️',
         title: tr('מעקב אחרי האות', 'Trace the Letter'),
-        subtitle: tr('מציירים את האות באצבע', 'Trace the letter with your finger'),
+        subtitle:
+            tr('מציירים את האות באצבע', 'Trace the letter with your finger'),
         color: Colors.indigo,
         builder: (_) => const TraceScreen(),
       ),
@@ -109,7 +114,8 @@ List<_GameInfo> _games() => [
         level: 6,
         emoji: '✍️',
         title: tr('כתיבה חופשית', 'Free Writing'),
-        subtitle: tr('שומעים אות וכותבים אותה לבד', 'Hear a letter and write it yourself'),
+        subtitle: tr('שומעים אות וכותבים אותה לבד',
+            'Hear a letter and write it yourself'),
         color: Colors.pink,
         builder: (_) => const WriteScreen(),
       ),
@@ -127,7 +133,7 @@ class GamesMenuScreen extends StatelessWidget {
           title: Text(tr('לאפס את ההתקדמות?', 'Reset progress?')),
           content: Text(
             tr('כל הכוכבים והאותיות שנלמדו יימחקו, ומתחילים מההתחלה.',
-              'All stars and learned letters will be deleted.'),
+                'All stars and learned letters will be deleted.'),
           ),
           actions: [
             TextButton(
@@ -182,12 +188,16 @@ class GamesMenuScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       _MenuCard(
                         emoji: '✨',
-                        label: newCount > 0 ? tr('חדש!', 'New!') : tr('חזרה', 'Review'),
+                        label: newCount > 0
+                            ? tr('חדש!', 'New!')
+                            : tr('חזרה', 'Review'),
                         title: tr(g('הכירי את האותיות', 'הכר את האותיות'),
                             'Meet the Letters'),
                         subtitle: newCount > 0
-                            ? tr('יש $newCount אותיות חדשות להכיר',
-                                '$newCount new letters to meet')
+                            ? tr(
+                                'יש $newCount אותיות חדשות להכיר',
+                                '$newCount new letters to meet',
+                                '${roCount(newCount, 'literă nouă', 'litere noi')} de cunoscut')
                             : tr('חוזרים על האותיות שלמדת',
                                 'Review the letters you learned'),
                         color: Colors.green,
@@ -203,7 +213,8 @@ class GamesMenuScreen extends StatelessWidget {
                         const SizedBox(height: 16),
                         _MenuCard(
                           emoji: game.emoji,
-                          label: tr('שלב ${game.level}', 'Level ${game.level}'),
+                          label: tr('שלב ${game.level}', 'Level ${game.level}',
+                              'Nivelul ${game.level}'),
                           title: game.title,
                           subtitle: game.subtitle,
                           color: game.color,
@@ -278,18 +289,22 @@ class _ProgressHeader extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // Every letter: green = known, white = met, grey = locked.
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (var i = 0; i < activeLetters.length; i++)
-                _LetterChip(
-                  letter: activeLetters[i].letter,
-                  unlocked: i < progress.unlockedCount,
-                  mastered: progress.isMastered(activeLetters[i].id),
-                ),
-            ],
+          // Laid out in the alphabet's own direction (א on the right).
+          Directionality(
+            textDirection: learnDirection,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (var i = 0; i < activeLetters.length; i++)
+                  _LetterChip(
+                    letter: activeLetters[i].letter,
+                    unlocked: i < progress.unlockedCount,
+                    mastered: progress.isMastered(activeLetters[i].id),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -388,7 +403,8 @@ class _MenuCard extends StatelessWidget {
                         label,
                         style: TextStyle(
                           fontSize: 16,
-                          color: highlight ? Colors.yellowAccent : Colors.white70,
+                          color:
+                              highlight ? Colors.yellowAccent : Colors.white70,
                           fontWeight:
                               highlight ? FontWeight.bold : FontWeight.normal,
                         ),

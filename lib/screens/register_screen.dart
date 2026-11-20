@@ -20,7 +20,8 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _name = TextEditingController();
   bool _isBoy = false;
-  late String _language; // 'he' or 'en' - what the child learns
+  late String _language; // 'he' or 'en' - the alphabet the child learns
+  late String _uiLanguage; // 'he', 'en' or 'ro' - how the app talks to them
   RecordedName? _recording;
   bool _voiceRemoved = false;
   bool _saving = false;
@@ -31,7 +32,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     final e = widget.editing;
-    _language = e?.language ?? ProfileService.instance.language;
+    final appLanguage = ProfileService.instance.appLanguage;
+    _uiLanguage = e?.uiLanguage ?? appLanguage;
+    // English-speaking families usually start with the ABC;
+    // Hebrew- and Romanian-speaking ones with Hebrew letters.
+    _language = e?.language ?? (appLanguage == 'en' ? 'en' : 'he');
     if (e != null) {
       _name.text = e.name;
       _isBoy = e.isBoy;
@@ -48,7 +53,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final name = _name.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tr('צריך לכתוב שם 🙂', 'Please enter a name 🙂'))),
+        SnackBar(
+            content: Text(tr('צריך לכתוב שם 🙂', 'Please enter a name 🙂'))),
       );
       return;
     }
@@ -60,6 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         name: name,
         isBoy: _isBoy,
         language: _language,
+        uiLanguage: _uiLanguage,
         voice: _recording?.bytes,
         voiceMime: _recording?.mime,
       );
@@ -70,6 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         name: name,
         isBoy: _isBoy,
         language: _language,
+        uiLanguage: _uiLanguage,
         voice: _recording?.bytes,
         voiceMime: _recording?.mime,
         removeVoice: _voiceRemoved && _recording == null,
@@ -122,6 +130,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
+                    tr('באיזו שפה האפליקציה תדבר?',
+                        'Which language should the app speak?'),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    tr('ההוראות, הכפתורים והמשוב בקול. כדאי לבחור את שפת האם.',
+                        'Instructions, buttons and spoken praise. Pick the home language.'),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: [
+                      for (final lang in uiLanguages)
+                        ButtonSegment(
+                          value: lang,
+                          label: Text(uiLanguageNames[lang]!,
+                              style: const TextStyle(fontSize: 18)),
+                        ),
+                    ],
+                    selected: {_uiLanguage},
+                    onSelectionChanged: (s) =>
+                        setState(() => _uiLanguage = s.first),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
                     tr('מה לומדים?', 'What to learn?'),
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
@@ -144,8 +179,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onSelectionChanged: (s) =>
                         setState(() => _language = s.first),
                   ),
-                  // Boy/girl only matters for Hebrew ("כתבי" / "כתוב").
-                  if (_language == 'he') ...[
+                  // Boy/girl only matters when the app speaks Hebrew
+                  // ("כתבי" / "כתוב").
+                  if (_uiLanguage == 'he') ...[
                     const SizedBox(height: 24),
                     Text(
                       tr('בן או בת?', 'Boy or girl?'),

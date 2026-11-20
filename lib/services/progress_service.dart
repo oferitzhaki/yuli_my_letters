@@ -59,8 +59,7 @@ class ProgressService extends ChangeNotifier {
   bool isIntroduced(String id) => _introduced.contains(id);
   int masteryOf(String id) => _mastery[id] ?? 0;
   bool isMastered(String id) => masteryOf(id) >= masteryGoal;
-  int get masteredCount =>
-      activeLetters.where((c) => isMastered(c.id)).length;
+  int get masteredCount => activeLetters.where((c) => isMastered(c.id)).length;
 
   /// Picks letters for a round, preferring the ones she knows least.
   List<HebrewCharacter> pickRoundLetters(int count) {
@@ -80,8 +79,8 @@ class ProgressService extends ChangeNotifier {
 
   /// Loads the progress of one child, in the language they learn now.
   Future<void> loadFor(String profileId) async {
-    _prefix = _prefixFor(profileId,
-        english: ProfileService.instance.isEnglish);
+    _prefix =
+        _prefixFor(profileId, english: ProfileService.instance.learnsEnglish);
     _stars = 0;
     _unlockedCount = groupSize;
     _introduced.clear();
@@ -93,8 +92,8 @@ class ProgressService extends ChangeNotifier {
       _unlockedCount = (p.getInt('$_prefix$_kUnlocked') ?? groupSize)
           .clamp(groupSize, activeLetters.length)
           .toInt();
-      _introduced.addAll(
-          p.getStringList('$_prefix$_kIntroduced') ?? const <String>[]);
+      _introduced
+          .addAll(p.getStringList('$_prefix$_kIntroduced') ?? const <String>[]);
       final raw = p.getString('$_prefix$_kMastery');
       if (raw != null) {
         final decoded = jsonDecode(raw) as Map<String, dynamic>;

@@ -1,6 +1,10 @@
 // lib/screens/letter_intro_screen.dart
 // "Meet the letters": one letter at a time, big, with its picture.
 // Plays the letter name and then the word, e.g. "אָלֶף ... אַרְיֵה".
+// When the app speaks another language than the one being learned, it
+// also shows and plays the translation ("leu") and how the letter
+// sounds in the child's letters ("Se citește: B"), and the first time
+// explains which way the new alphabet is read.
 
 import 'dart:math';
 
@@ -34,7 +38,82 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
     _letters = p.lettersToIntroduce.isNotEmpty
         ? p.lettersToIntroduce
         : p.unlockedLetters;
-    _showCurrent();
+    // Very first letter, and the new alphabet runs the other way.
+    final firstTime = !p.isIntroduced(activeLetters.first.id);
+    if (firstTime && learnDirection != appDirection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await _explainDirection();
+        if (mounted) _announce();
+      });
+    } else {
+      _showCurrent();
+    }
+  }
+
+  /// "In Hebrew we read and write from right to left", with the first
+  /// letters laid out that way and an arrow.
+  Future<void> _explainDirection() {
+    final rtl = learnDirection == TextDirection.rtl;
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => Directionality(
+        textDirection: appDirection,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Directionality(
+                textDirection: learnDirection,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (final c in activeLetters.take(3))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          c.letter,
+                          style: const TextStyle(
+                            fontSize: 56,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepOrange,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Text(rtl ? '⬅️' : '➡️', style: const TextStyle(fontSize: 56)),
+              const SizedBox(height: 12),
+              Text(
+                rtl
+                    ? tr(
+                        'בעברית קוראים וכותבים מימין לשמאל',
+                        'In Hebrew we read and write from right to left',
+                        'În ebraică citim și scriem de la dreapta la stânga')
+                    : tr(
+                        'באנגלית קוראים וכותבים משמאל לימין',
+                        'In English we read and write from left to right',
+                        'În engleză citim și scriem de la stânga la dreapta'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22),
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                tr('הבנתי! 👍', 'Got it! 👍', 'Am înțeles! 👍'),
+                style: const TextStyle(fontSize: 20),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -47,10 +126,13 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
     // After the frame: updating progress notifies the menu behind us,
     // which must not happen while this screen is still being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ProgressService.instance.markIntroduced(_current.id);
-      _audio.playLetterThenWord(_current);
+      if (mounted) _announce();
     });
+  }
+
+  void _announce() {
+    ProgressService.instance.markIntroduced(_current.id);
+    _audio.playLetterThenWord(_current);
   }
 
   void _next() {
@@ -77,14 +159,18 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
         textDirection: appDirection,
         child: AlertDialog(
           title: Text(
-            tr('🎉 כל הכבוד ${ProfileService.instance.name}!',
-              '🎉 Great job, ${ProfileService.instance.name}!'),
+            tr(
+                '🎉 כל הכבוד ${ProfileService.instance.name}!',
+                '🎉 Great job, ${ProfileService.instance.name}!',
+                '🎉 Bravo, ${ProfileService.instance.name}!'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 28),
           ),
           content: Text(
-            tr('הכרת ${_letters.length} אותיות.\nעכשיו אפשר לשחק איתן!',
-                "You met ${_letters.length} letters.\nNow let's play with them!"),
+            tr(
+                'הכרת ${_letters.length} אותיות.\nעכשיו אפשר לשחק איתן!',
+                "You met ${_letters.length} letters.\nNow let's play with them!",
+                'Ai cunoscut ${roCount(_letters.length, 'literă', 'litere')}.\nAcum hai să ne jucăm cu ele!'),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 22),
           ),
@@ -124,8 +210,7 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
               final w = constraints.maxWidth;
               final letterSize =
                   min(h * 0.34, w * 0.6).clamp(120.0, 280.0).toDouble();
-              final pictureHeight =
-                  (h * 0.16).clamp(70.0, 140.0).toDouble();
+              final pictureHeight = (h * 0.16).clamp(70.0, 140.0).toDouble();
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -158,11 +243,35 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                           ),
                         ),
                       ),
+                      // How it sounds in the child's letters: "Se citește: Ț".
+                      if (soundHintOf(_current) != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.orange.shade200),
+                            ),
+                            child: Text(
+                              '${tr('נשמעת כמו', 'Sounds like', 'Se citește')}: '
+                              '${soundHintOf(_current)}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 16),
 
                       // The picture and word - tap to hear the word.
                       GestureDetector(
-                        onTap: () => _audio.playAnimal(_current),
+                        onTap: () => _audio.playWordWithTranslation(_current),
                         child: Container(
                           height: pictureHeight,
                           padding: const EdgeInsets.symmetric(
@@ -182,12 +291,26 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                                   style: const TextStyle(fontSize: 80),
                                 ),
                                 const SizedBox(width: 20),
-                                Text(
-                                  _current.animalName,
-                                  style: const TextStyle(
-                                    fontSize: 56,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _current.animalName,
+                                      style: const TextStyle(
+                                        fontSize: 56,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    // The word in the child's own language.
+                                    if (translationOf(_current) != null)
+                                      Text(
+                                        translationOf(_current)!,
+                                        style: const TextStyle(
+                                          fontSize: 40,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -244,7 +367,9 @@ class _LetterIntroScreenState extends State<LetterIntroScreen> {
                               size: 28,
                             ),
                             label: Text(
-                              _isLast ? tr('סיימתי!', 'Done!') : tr('הבאה', 'Next'),
+                              _isLast
+                                  ? tr('סיימתי!', 'Done!')
+                                  : tr('הבאה', 'Next'),
                               style: const TextStyle(fontSize: 22),
                             ),
                             style: FilledButton.styleFrom(

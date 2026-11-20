@@ -32,7 +32,10 @@ class HomeScreen extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            tr('שלום ${profile.name}! 👋', 'Hi ${profile.name}! 👋'),
+                            tr(
+                                'שלום ${profile.name}! 👋',
+                                'Hi ${profile.name}! 👋',
+                                'Bună, ${profile.name}! 👋'),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 40,
@@ -41,7 +44,8 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            tr('לומדים אותיות עם חברים', 'Learning letters with friends'),
+                            tr('לומדים אותיות עם חברים',
+                                'Learning letters with friends'),
                             style: TextStyle(
                               fontSize: 20,
                               color: Colors.black54,
@@ -49,7 +53,10 @@ class HomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 32),
                           Text(
-                            activeLetters.take(3).map((c) => c.emoji).join('  '),
+                            activeLetters
+                                .take(3)
+                                .map((c) => c.emoji)
+                                .join('  '),
                             style: TextStyle(fontSize: 64),
                           ),
                           const SizedBox(height: 24),

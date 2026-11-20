@@ -137,7 +137,8 @@ class _WriteScreenState extends State<WriteScreen> {
 
     if (_inkLength() < _side * 0.25) {
       if (!quietIfWrong) {
-        setState(() => _message = tr(g('נסי לכתוב אות גדולה יותר 🙂', 'נסה לכתוב אות גדולה יותר 🙂'),
+        setState(() => _message = tr(
+            g('נסי לכתוב אות גדולה יותר 🙂', 'נסה לכתוב אות גדולה יותר 🙂'),
             'Try writing a bigger letter 🙂'));
       }
       return;
@@ -210,9 +211,11 @@ class _WriteScreenState extends State<WriteScreen> {
   @override
   Widget build(BuildContext context) {
     final text = _done
-        ? tr('🎉 נכון! ${_current.letter}', '🎉 Correct! ${_current.letter}')
-        : _message ?? tr(g('כתבי את האות ששמעת ✍️', 'כתוב את האות ששמעת ✍️'),
-            'Write the letter you heard ✍️');
+        ? tr('🎉 נכון! ${_current.letter}', '🎉 Correct! ${_current.letter}',
+            '🎉 Corect! ${_current.letter}')
+        : _message ??
+            tr(g('כתבי את האות ששמעת ✍️', 'כתוב את האות ששמעת ✍️'),
+                'Write the letter you heard ✍️');
 
     return Directionality(
       textDirection: appDirection,
@@ -243,10 +246,10 @@ class _WriteScreenState extends State<WriteScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               // No scrolling: the finger must draw, not scroll.
-              _side = min(constraints.maxWidth - 32,
-                      constraints.maxHeight - 200)
-                  .clamp(200.0, 560.0)
-                  .toDouble();
+              _side =
+                  min(constraints.maxWidth - 32, constraints.maxHeight - 200)
+                      .clamp(200.0, 560.0)
+                      .toDouble();
 
               return Center(
                 child: Column(
@@ -305,7 +308,9 @@ class _WriteScreenState extends State<WriteScreen> {
                           onPressed: _done || !_ready ? null : _check,
                           icon: const Icon(Icons.check, size: 26),
                           label: Text(
-                            _ready ? tr(g('בדקי', 'בדוק'), 'Check') : tr('מכין...', 'Loading...'),
+                            _ready
+                                ? tr(g('בדקי', 'בדוק'), 'Check')
+                                : tr('מכין...', 'Loading...'),
                             style: const TextStyle(fontSize: 20),
                           ),
                           style: FilledButton.styleFrom(

@@ -293,9 +293,10 @@ class _TraceScreenState extends State<TraceScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               // No scrolling here: the finger must draw, not scroll.
-              _side = min(constraints.maxWidth - 32, constraints.maxHeight - 190)
-                  .clamp(200.0, 560.0)
-                  .toDouble();
+              _side =
+                  min(constraints.maxWidth - 32, constraints.maxHeight - 190)
+                      .clamp(200.0, 560.0)
+                      .toDouble();
               final progress = (_coverage / _coverageGoal).clamp(0.0, 1.0);
 
               return Center(
@@ -308,7 +309,10 @@ class _TraceScreenState extends State<TraceScreen> {
                       child: FittedBox(
                         child: Text(
                           _done
-                              ? tr('🎉 נכון! ${_current.letter}', '🎉 Correct! ${_current.letter}')
+                              ? tr(
+                                  '🎉 נכון! ${_current.letter}',
+                                  '🎉 Correct! ${_current.letter}',
+                                  '🎉 Corect! ${_current.letter}')
                               : _offTrack
                                   ? tr(
                                       g('נסי לצייר רק על האות האפורה 🙂',

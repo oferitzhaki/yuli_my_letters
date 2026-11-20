@@ -57,6 +57,12 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
 
   HebrewCharacter get _current => _roundLetters[_questionIndex];
 
+  /// "ברווז", or "ברווז (rață)" when the app speaks another language.
+  String get _wordWithTranslation {
+    final t = translationOf(_current);
+    return t == null ? _current.animalName : '${_current.animalName} ($t)';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -266,8 +272,10 @@ class _ChoiceGameScreenState extends State<ChoiceGameScreen> {
                         child: _answeredCorrectly
                             ? FittedBox(
                                 child: Text(
-                                  tr('🎉 נכון! ${_current.letter} · ${_current.emoji} ${_current.animalName}',
-                                      '🎉 Correct! ${_current.letter} · ${_current.emoji} ${_current.animalName}'),
+                                  tr(
+                                      '🎉 נכון! ${_current.letter} · ${_current.emoji} $_wordWithTranslation',
+                                      '🎉 Correct! ${_current.letter} · ${_current.emoji} $_wordWithTranslation',
+                                      '🎉 Corect! ${_current.letter} · ${_current.emoji} $_wordWithTranslation'),
                                   style: const TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,

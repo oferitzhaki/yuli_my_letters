@@ -15,7 +15,8 @@ const List<HebrewCharacter> englishCharacters = [
   HebrewCharacter(id: 'en_f', letter: 'F', animalName: 'Fish', emoji: '🐟'),
   HebrewCharacter(id: 'en_g', letter: 'G', animalName: 'Grapes', emoji: '🍇'),
   HebrewCharacter(id: 'en_h', letter: 'H', animalName: 'Hat', emoji: '🎩'),
-  HebrewCharacter(id: 'en_i', letter: 'I', animalName: 'Ice cream', emoji: '🍦'),
+  HebrewCharacter(
+      id: 'en_i', letter: 'I', animalName: 'Ice cream', emoji: '🍦'),
   HebrewCharacter(id: 'en_j', letter: 'J', animalName: 'Juice', emoji: '🧃'),
   HebrewCharacter(id: 'en_k', letter: 'K', animalName: 'Kite', emoji: '🪁'),
   HebrewCharacter(id: 'en_l', letter: 'L', animalName: 'Lion', emoji: '🦁'),
@@ -29,7 +30,8 @@ const List<HebrewCharacter> englishCharacters = [
   HebrewCharacter(id: 'en_t', letter: 'T', animalName: 'Tree', emoji: '🌳'),
   HebrewCharacter(id: 'en_u', letter: 'U', animalName: 'Umbrella', emoji: '☂️'),
   HebrewCharacter(id: 'en_v', letter: 'V', animalName: 'Van', emoji: '🚐'),
-  HebrewCharacter(id: 'en_w', letter: 'W', animalName: 'Watermelon', emoji: '🍉'),
+  HebrewCharacter(
+      id: 'en_w', letter: 'W', animalName: 'Watermelon', emoji: '🍉'),
   HebrewCharacter(id: 'en_x', letter: 'X', animalName: 'X-ray', emoji: '🩻'),
   HebrewCharacter(id: 'en_y', letter: 'Y', animalName: 'Yo-yo', emoji: '🪀'),
   HebrewCharacter(id: 'en_z', letter: 'Z', animalName: 'Zebra', emoji: '🦓'),

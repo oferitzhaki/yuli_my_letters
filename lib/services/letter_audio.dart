@@ -1,7 +1,11 @@
 // lib/services/letter_audio.dart
-// All sounds: letter names (<id>.mp3), words (animal_<id>.mp3),
-// spoken feedback in girl/boy form (fb_*.mp3) and the child's name
-// as recorded by a parent. Missing files fail silently.
+// All sounds. What the child LEARNS is heard in that language:
+//   letter names  <id>.mp3          (אָלֶף / "ay")
+//   picture words animal_<id>.mp3   (אַרְיֵה / "Apple")
+// What helps them understand is heard in the language the app SPEAKS:
+//   translations  tr_<lang>_<id>.mp3  ("leu" for אריה)
+//   feedback      fb_*.mp3 (Hebrew, girl/boy forms), fb_en_*.mp3, fb_ro_*.mp3
+// plus the child's name as recorded by a parent. Missing files fail silently.
 
 import 'dart:async';
 import 'dart:math';
@@ -40,9 +44,19 @@ class LetterAudio {
 
   // ---------- sequences (complete when done or interrupted) ----------
 
-  /// "אָלֶף ... אַרְיֵה"
-  Future<bool> playLetterThenWord(HebrewCharacter c) =>
-      _sequence([_letter(c), _word(c)]);
+  /// "אָלֶף ... אַרְיֵה", and the translation when the app speaks another
+  /// language: "אָלֶף ... אַרְיֵה ... leu".
+  Future<bool> playLetterThenWord(HebrewCharacter c) => _sequence([
+        _letter(c),
+        _word(c),
+        if (translationOf(c) != null) _translation(c),
+      ]);
+
+  /// The picture word, then its translation if there is one.
+  Future<bool> playWordWithTranslation(HebrewCharacter c) => _sequence([
+        _word(c),
+        if (translationOf(c) != null) _translation(c),
+      ]);
 
   /// "אָלֶף ... (name) ... יופי, הצלחת!" - the name about half the time.
   Future<bool> playLetterThenPraise(HebrewCharacter c) => _sequence([
@@ -51,46 +65,55 @@ class LetterAudio {
         _praise(),
       ]);
 
-  /// "כמעט! נסי שוב" / "Almost! Try again" - true if not interrupted.
-  Future<bool> playTryAgain() =>
-      _sequence([_fb('try_${_g}_${_random.nextInt(2) + 1}', 'try_${_random.nextInt(2) + 1}')]);
+  /// "כמעט! נסי שוב" / "Almost! Try again" / "Aproape! Mai încearcă."
+  /// Returns true if it was not interrupted.
+  Future<bool> playTryAgain() {
+    final n = _random.nextInt(2) + 1;
+    return _sequence([_fb(he: 'try_${_g}_$n', other: 'try_$n')]);
+  }
 
   Future<bool> playRoundDone({bool unlocked = false}) => _sequence([
         if (_name != null) _name!,
-        _fb('round_$_g', 'round'),
-        if (unlocked) _fb('unlock_$_g', 'unlock'),
+        _fb(he: 'round_$_g', other: 'round'),
+        if (unlocked) _fb(he: 'unlock_$_g', other: 'unlock'),
       ]);
 
   Future<bool> playIntroDone() => _sequence([
         if (_name != null) _name!,
-        _fb('intro_done_n', 'intro_done'),
+        _fb(he: 'intro_done_n', other: 'intro_done'),
       ]);
 
-  /// "כתבי את האות ... בֵּית" / "Write the letter ... B"
+  /// "כתבי את האות ... בֵּית" / "Scrie litera ... בֵּית"
   Future<bool> playWritePrompt(HebrewCharacter c) =>
-      _sequence([_fb('write_$_g', 'write'), _letter(c)]);
+      _sequence([_fb(he: 'write_$_g', other: 'write'), _letter(c)]);
 
   // ---------- internals ----------
 
   String get _g => ProfileService.instance.isBoy ? 'm' : 'f';
   String? get _name => ProfileService.instance.voiceUrl;
-  bool get _en => ProfileService.instance.isEnglish;
 
-  /// Feedback file: fb_<hebrew>.mp3, or fb_en_<english>.mp3 in English.
-  String _fb(String hebrew, String english) =>
-      _en ? 'assets/audio/fb_en_$english.mp3' : 'assets/audio/fb_$hebrew.mp3';
+  /// A feedback file in the language the app speaks:
+  /// `fb_<he>.mp3` in Hebrew, `fb_en_<other>.mp3` or `fb_ro_<other>.mp3` otherwise.
+  String _fb({required String he, required String other}) => uiLang == 'he'
+      ? 'assets/audio/fb_$he.mp3'
+      : 'assets/audio/fb_${uiLang}_$other.mp3';
 
   String _letter(HebrewCharacter c) => 'assets/audio/${c.id}.mp3';
   String _word(HebrewCharacter c) => 'assets/audio/animal_${c.id}.mp3';
+  String _translation(HebrewCharacter c) =>
+      'assets/audio/tr_${uiLang}_${c.id}.mp3';
 
   String _praise() {
-    final options = _en
-        ? [for (var i = 1; i <= 4; i++) 'assets/audio/fb_en_praise_$i.mp3']
-        : [
+    final options = uiLang == 'he'
+        ? [
             'assets/audio/fb_praise_n_1.mp3',
             'assets/audio/fb_praise_n_2.mp3',
             'assets/audio/fb_praise_${_g}_1.mp3',
             'assets/audio/fb_praise_${_g}_2.mp3',
+          ]
+        : [
+            for (var i = 1; i <= 4; i++)
+              'assets/audio/fb_${uiLang}_praise_$i.mp3'
           ];
     return options[_random.nextInt(options.length)];
   }

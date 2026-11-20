@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """
-Generate Hebrew audio with Google Cloud TTS:
-  assets/audio/<id>.mp3         - letter names (אָלֶף, בֵּית ...)
-  assets/audio/animal_<id>.mp3  - animal names (אַרְיֵה, בַּרְוָז ...)
+Generate the app's audio with Google Cloud TTS (files in assets/audio/):
+  <id>.mp3              letter names (אָלֶף ... / "ay" ...)
+  animal_<id>.mp3       picture words (אַרְיֵה ... / "Apple" ...)
+  fb_*.mp3              spoken feedback: Hebrew, fb_en_* English, fb_ro_* Romanian
+  tr_<lang>_<id>.mp3    a picture word translated into the language the app
+                        speaks, e.g. tr_ro_alef = "leu". English and Romanian
+                        words are read from lib/constants/translations.dart, so
+                        what is heard always matches what is shown.
 Existing files are skipped, so it is safe to run again.
 Needs google_credentials.json next to this script.
 """
 
 import os
+import re
 from google.cloud import texttospeech
 from google.oauth2 import service_account
 
@@ -76,6 +82,71 @@ EN_PHRASES = [
     ("fb_en_write", "Write the letter"),
 ]
 
+# ---------- Romanian: instructions and praise ----------
+RO_PHRASES = [
+    ("fb_ro_praise_1", "Bravo!"),
+    ("fb_ro_praise_2", "Foarte bine!"),
+    ("fb_ro_praise_3", "Super!"),
+    ("fb_ro_praise_4", "Excelent!"),
+    ("fb_ro_try_1", "Aproape! Mai încearcă."),
+    ("fb_ro_try_2", "Nu-i nimic, mai încearcă o dată."),
+    ("fb_ro_round", "Bravo! Ai terminat runda!"),
+    ("fb_ro_unlock", "Te așteaptă litere noi!"),
+    ("fb_ro_intro_done", "Foarte bine! Acum hai să ne jucăm!"),
+    ("fb_ro_write", "Scrie litera"),
+]
+
+# Hebrew translations of the English picture words, with vowel marks so
+# they are pronounced correctly (the app shows them without marks).
+HE_TRANSLATIONS = {
+    "en_a": "תַּפּוּחַ", "en_b": "כַּדּוּר", "en_c": "חָתוּל", "en_d": "כֶּלֶב",
+    "en_e": "בֵּיצָה", "en_f": "דָּג", "en_g": "עֲנָבִים", "en_h": "כּוֹבַע",
+    "en_i": "גְּלִידָה", "en_j": "מִיץ", "en_k": "עֲפִיפוֹן", "en_l": "אַרְיֵה",
+    "en_m": "יָרֵחַ", "en_n": "אַף", "en_o": "תַּפּוּז", "en_p": "חֲזִיר",
+    "en_q": "מַלְכָּה", "en_r": "אַרְנָב", "en_s": "שֶׁמֶשׁ", "en_t": "עֵץ",
+    "en_u": "מִטְרִיָּה", "en_v": "טֶנְדֶּר", "en_w": "אֲבַטִּיחַ",
+    "en_x": "צִלּוּם רֶנְטְגֶן", "en_y": "יוֹ-יוֹ", "en_z": "זֶבְּרָה",
+}
+
+TRANSLATIONS_FILE = "lib/constants/translations.dart"
+
+
+def read_translations():
+    """{(lang, id): word} for English and Romanian, from the Dart file."""
+    text = open(TRANSLATIONS_FILE, encoding="utf-8").read()
+    block = text.split("wordTranslations", 1)[1].split("};", 1)[0]
+    found = {}
+    for letter_id, body in re.findall(r"'(\w+)':\s*\{([^}]*)\}", block):
+        for lang, word in re.findall(r"'(\w+)':\s*'([^']*)'", body):
+            if lang in ("en", "ro"):
+                found[(lang, letter_id)] = word
+    return found
+
+
+# Preferred voices; if one is not offered, the best available voice for
+# that language is used instead.
+PREFERRED_VOICES = {
+    "he": ("he-IL", ["he-IL-Wavenet-A"]),
+    "en": ("en-US", ["en-US-Wavenet-F"]),
+    "ro": ("ro-RO", ["ro-RO-Wavenet-A", "ro-RO-Wavenet-B", "ro-RO-Standard-A"]),
+}
+
+
+def pick_voices(client):
+    voices = {}
+    for lang, (code, preferred) in PREFERRED_VOICES.items():
+        offered = [v.name for v in client.list_voices(language_code=code).voices]
+        name = next((n for n in preferred if n in offered), None)
+        if name is None:
+            ranked = sorted(offered, key=lambda n: (
+                "Wavenet" not in n and "Neural2" not in n, n))
+            name = ranked[0] if ranked else None
+        print(f"Voice for {lang}: {name or code + ' (default)'}")
+        voices[lang] = (texttospeech.VoiceSelectionParams(language_code=code, name=name)
+                        if name else texttospeech.VoiceSelectionParams(language_code=code))
+    return voices
+
+
 OUTPUT_DIR = "assets/audio"
 
 
@@ -90,12 +161,8 @@ def main():
     client = texttospeech.TextToSpeechClient(credentials=credentials)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    voices = {
-        "he": texttospeech.VoiceSelectionParams(
-            language_code="he-IL", name="he-IL-Wavenet-A"),
-        "en": texttospeech.VoiceSelectionParams(
-            language_code="en-US", name="en-US-Wavenet-F"),
-    }
+    voices = pick_voices(client)
+    translations = read_translations()
     # Letters and words a bit slower for clarity; feedback at normal pace
     # so praise comes quickly.
     LEARN_RATE = 0.8
@@ -109,7 +176,12 @@ def main():
              f'<speak><say-as interpret-as="characters">{t}</say-as></speak>',
              LEARN_RATE, "en", True) for i, t in EN_LETTERS] + \
            [(f"animal_{i}.mp3", t, LEARN_RATE, "en", False) for i, t in EN_WORDS] + \
-           [(f"{n}.mp3", t, FEEDBACK_RATE, "en", False) for n, t in EN_PHRASES]
+           [(f"{n}.mp3", t, FEEDBACK_RATE, "en", False) for n, t in EN_PHRASES] + \
+           [(f"{n}.mp3", t, FEEDBACK_RATE, "ro", False) for n, t in RO_PHRASES] + \
+           [(f"tr_{lang}_{i}.mp3", w, LEARN_RATE, lang, False)
+            for (lang, i), w in sorted(translations.items())] + \
+           [(f"tr_he_{i}.mp3", w, LEARN_RATE, "he", False)
+            for i, w in HE_TRANSLATIONS.items()]
 
     made = skipped = failed = 0
     for filename, text, rate, lang, is_ssml in jobs:

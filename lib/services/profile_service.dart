@@ -1,10 +1,15 @@
 // lib/services/profile_service.dart
-// Children registered on this device: name, boy/girl, and an optional
-// recording of the name in a parent's voice. Each child has separate
-// progress (see ProgressService).
+// Children registered on this device. Each child has:
+//  * a name (and optionally that name recorded in a parent's voice)
+//  * boy/girl (used for Hebrew grammar: "כתבי" / "כתוב")
+//  * the alphabet they LEARN: Hebrew ('he') or English ('en')
+//  * the language the app SPEAKS to them: Hebrew, English or Romanian
+//    ('he' / 'en' / 'ro') - buttons, instructions and spoken praise.
+// For example, a Romanian-speaking child learns Hebrew letters
+// (learn 'he') with Romanian instructions (ui 'ro').
+// Each child has separate progress (see ProgressService).
 
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui' show TextDirection;
 
 import 'package:flutter/foundation.dart';
@@ -12,7 +17,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/english_characters.dart';
 import '../constants/hebrew_characters.dart';
+import '../constants/romanian_texts.dart';
+import '../constants/translations.dart';
 import 'progress_service.dart';
+
+/// The languages the app can speak to a child, in display order.
+const List<String> uiLanguages = ['he', 'en', 'ro'];
+
+/// Each language's own name, as shown on its button.
+const Map<String, String> uiLanguageNames = {
+  'he': 'עברית',
+  'en': 'English',
+  'ro': 'Română',
+};
 
 class ChildProfile {
   ChildProfile({
@@ -21,17 +38,21 @@ class ChildProfile {
     required this.isBoy,
     this.hasVoice = false,
     this.language = 'he',
-  });
+    String? uiLanguage,
+  }) : uiLanguage = uiLanguage ?? language;
 
   final String id;
   String name;
   bool isBoy;
   bool hasVoice;
 
-  /// What the child learns (and the app's language for them): 'he' or 'en'.
+  /// The alphabet the child learns: 'he' or 'en'.
   String language;
 
-  bool get isEnglish => language == 'en';
+  /// The language the app speaks to the child: 'he', 'en' or 'ro'.
+  String uiLanguage;
+
+  bool get learnsEnglish => language == 'en';
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -39,32 +60,77 @@ class ChildProfile {
         'isBoy': isBoy,
         'hasVoice': hasVoice,
         'language': language,
+        'ui': uiLanguage,
       };
 
+  // Profiles saved before 'ui' existed spoke the language they learned.
   factory ChildProfile.fromJson(Map<String, dynamic> j) => ChildProfile(
         id: j['id'] as String,
         name: j['name'] as String? ?? '',
         isBoy: j['isBoy'] as bool? ?? false,
         hasVoice: j['hasVoice'] as bool? ?? false,
         language: j['language'] as String? ?? 'he',
+        uiLanguage: j['ui'] as String?,
       );
 }
+
+/// The language the app speaks right now: the playing child's, or the
+/// app's own language when no child is selected.
+String get uiLang => ProfileService.instance.uiLanguage;
 
 /// Picks the girl or boy form of a Hebrew text for the child who is playing.
 String g(String female, String male) =>
     ProfileService.instance.isBoy ? male : female;
 
-/// Picks the Hebrew or English text for the current language.
-String tr(String hebrew, String english) =>
-    ProfileService.instance.isEnglish ? english : hebrew;
+/// Picks the text for the current language. The Romanian text is either
+/// given here (texts with names or numbers inside them) or looked up by
+/// its English text in romanianTexts; if missing, English is shown.
+String tr(String hebrew, String english, [String? romanian]) {
+  switch (uiLang) {
+    case 'he':
+      return hebrew;
+    case 'ro':
+      return romanian ?? romanianTexts[english] ?? english;
+    default:
+      return english;
+  }
+}
 
-/// Right-to-left for Hebrew, left-to-right for English.
+/// A Romanian count: "1 stea", "10 stele", "25 de stele" (numbers whose
+/// last two digits are 20-99 or 00 take "de").
+String roCount(int n, String one, String many) {
+  if (n == 1) return '1 $one';
+  final lastTwo = n % 100;
+  final de = n != 0 && (lastTwo == 0 || lastTwo >= 20);
+  return de ? '$n de $many' : '$n $many';
+}
+
+/// Screens follow the language the app speaks: right-to-left for Hebrew.
 TextDirection get appDirection =>
-    ProfileService.instance.isEnglish ? TextDirection.ltr : TextDirection.rtl;
+    uiLang == 'he' ? TextDirection.rtl : TextDirection.ltr;
+
+/// Rows of letters follow the alphabet being learned: Hebrew right-to-left.
+TextDirection get learnDirection => ProfileService.instance.learnsEnglish
+    ? TextDirection.ltr
+    : TextDirection.rtl;
 
 /// The alphabet the current child learns.
-List<HebrewCharacter> get activeLetters =>
-    ProfileService.instance.isEnglish ? englishCharacters : hebrewCharacters;
+List<HebrewCharacter> get activeLetters => ProfileService.instance.learnsEnglish
+    ? englishCharacters
+    : hebrewCharacters;
+
+/// The picture word in the language the app speaks, e.g. אריה -> "leu".
+/// Null when the child learns in their own language (nothing to translate).
+String? translationOf(HebrewCharacter c) {
+  if (uiLang == ProfileService.instance.learnLanguage) return null;
+  return wordTranslations[c.id]?[uiLang];
+}
+
+/// How a Hebrew letter sounds, written the child's way, e.g. צ -> "Ț".
+String? soundHintOf(HebrewCharacter c) {
+  if (uiLang == ProfileService.instance.learnLanguage) return null;
+  return letterSoundHints[c.id]?[uiLang];
+}
 
 class ProfileService extends ChangeNotifier {
   ProfileService._();
@@ -78,7 +144,7 @@ class ProfileService extends ChangeNotifier {
   final List<ChildProfile> _profiles = [];
   String? _currentId;
   String? _voiceUrl;
-  String? _uiLanguage; // chosen on first launch; used when no child is active
+  String? _appLanguage; // chosen on first launch; used when no child is active
 
   List<ChildProfile> get profiles => List.unmodifiable(_profiles);
 
@@ -92,15 +158,21 @@ class ProfileService extends ChangeNotifier {
   bool get isBoy => current?.isBoy ?? false;
   String get name => current?.name ?? '';
 
-  /// The language of the child who is playing, or of the app itself.
-  String get language => current?.language ?? _uiLanguage ?? 'he';
-  bool get isEnglish => language == 'en';
+  /// The alphabet the playing child learns ('he' or 'en').
+  String get learnLanguage => current?.language ?? 'he';
+  bool get learnsEnglish => learnLanguage == 'en';
 
-  /// False until someone picks עברית / English on the very first launch.
-  bool get uiLanguageChosen => _uiLanguage != null;
+  /// The language the app speaks now: the child's, or the app's own.
+  String get uiLanguage => current?.uiLanguage ?? appLanguage;
+
+  /// The app's own language (first screens, "who is playing?").
+  String get appLanguage => _appLanguage ?? 'he';
+
+  /// False until someone picks a language on the very first launch.
+  bool get uiLanguageChosen => _appLanguage != null;
 
   Future<void> setUiLanguage(String lang) async {
-    _uiLanguage = lang;
+    _appLanguage = lang;
     await _prefs?.setString(_kUiLanguage, lang);
     notifyListeners();
   }
@@ -114,7 +186,7 @@ class ProfileService extends ChangeNotifier {
     try {
       final p = await SharedPreferences.getInstance();
       _prefs = p;
-      _uiLanguage = p.getString(_kUiLanguage);
+      _appLanguage = p.getString(_kUiLanguage);
       _profiles.clear();
       final raw = p.getString(_kProfiles);
       if (raw != null) {
@@ -144,7 +216,7 @@ class ProfileService extends ChangeNotifier {
     await ProgressService.migrateLegacy(p, yuli.id);
     await p.setString(_kCurrent, yuli.id);
     await p.setString(_kUiLanguage, 'he');
-    _uiLanguage = 'he';
+    _appLanguage = 'he';
     await _saveProfiles();
   }
 
@@ -167,6 +239,7 @@ class ProfileService extends ChangeNotifier {
     required String name,
     required bool isBoy,
     required String language,
+    required String uiLanguage,
     Uint8List? voice,
     String? voiceMime,
   }) async {
@@ -175,6 +248,7 @@ class ProfileService extends ChangeNotifier {
       name: name.trim(),
       isBoy: isBoy,
       language: language,
+      uiLanguage: uiLanguage,
     );
     _profiles.add(profile);
     if (voice != null && voiceMime != null) {
@@ -190,6 +264,7 @@ class ProfileService extends ChangeNotifier {
     required String name,
     required bool isBoy,
     required String language,
+    required String uiLanguage,
     Uint8List? voice,
     String? voiceMime,
     bool removeVoice = false,
@@ -198,6 +273,7 @@ class ProfileService extends ChangeNotifier {
     profile.name = name.trim();
     profile.isBoy = isBoy;
     profile.language = language;
+    profile.uiLanguage = uiLanguage;
     if (removeVoice) {
       await _prefs?.remove(_voiceKey(profile.id));
       profile.hasVoice = false;
@@ -208,7 +284,7 @@ class ProfileService extends ChangeNotifier {
     await _saveProfiles();
     if (profile.id == _currentId) {
       _voiceUrl = _prefs?.getString(_voiceKey(profile.id));
-      // Switch to that language's own progress.
+      // A different alphabet has its own progress.
       if (languageChanged) await ProgressService.instance.loadFor(profile.id);
     }
     notifyListeners();

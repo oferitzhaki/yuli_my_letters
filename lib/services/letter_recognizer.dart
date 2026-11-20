@@ -204,9 +204,14 @@ class LetterRecognizer {
           for (var x = 0; x < _n; x++) {
             if (!g[y * _n + x]) continue;
             final p = [
-              at(x, y - 1), at(x + 1, y - 1), at(x + 1, y),
-              at(x + 1, y + 1), at(x, y + 1), at(x - 1, y + 1),
-              at(x - 1, y), at(x - 1, y - 1),
+              at(x, y - 1),
+              at(x + 1, y - 1),
+              at(x + 1, y),
+              at(x + 1, y + 1),
+              at(x, y + 1),
+              at(x - 1, y + 1),
+              at(x - 1, y),
+              at(x - 1, y - 1),
             ];
             final neighbours = p.where((v) => v).length;
             if (neighbours < 2 || neighbours > 6) continue;

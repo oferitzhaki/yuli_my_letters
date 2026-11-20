@@ -165,8 +165,8 @@ class _MemoryScreenState extends State<MemoryScreen> {
                       );
                       return Center(
                         child: SizedBox(
-                          width: layout.cols * layout.w +
-                              (layout.cols - 1) * gap,
+                          width:
+                              layout.cols * layout.w + (layout.cols - 1) * gap,
                           child: Wrap(
                             spacing: gap,
                             runSpacing: gap,
@@ -192,10 +192,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
     );
   }
 
-  String _levelName(int i) =>
-      i == _levels.length - 1
-          ? tr(g('אלופה', 'אלוף'), 'Champion')
-          : tr(_levels[i].$1, _levels[i].$2);
+  String _levelName(int i) => i == _levels.length - 1
+      ? tr(g('אלופה', 'אלוף'), 'Champion')
+      : tr(_levels[i].$1, _levels[i].$2);
 
   Widget _buildLevelPicker() {
     final available = ProgressService.instance.playableLetters.length;
@@ -211,7 +210,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
             final pairs = min(_levels[i].$3, available);
             return ChoiceChip(
               label: Text(
-                enabled ? '${_levelName(i)} · $pairs ${tr('זוגות', 'pairs')}' : '${_levelName(i)} 🔒',
+                enabled
+                    ? '${_levelName(i)} · $pairs ${tr('זוגות', 'pairs')}'
+                    : '${_levelName(i)} 🔒',
                 style: const TextStyle(fontSize: 16),
               ),
               selected: _level == i,

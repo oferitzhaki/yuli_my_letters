@@ -17,8 +17,10 @@ Future<void> showRoundCompleteDialog(
       textDirection: appDirection,
       child: AlertDialog(
         title: Text(
-          tr('🎉 כל הכבוד ${ProfileService.instance.name}!',
-              '🎉 Great job, ${ProfileService.instance.name}!'),
+          tr(
+              '🎉 כל הכבוד ${ProfileService.instance.name}!',
+              '🎉 Great job, ${ProfileService.instance.name}!',
+              '🎉 Bravo, ${ProfileService.instance.name}!'),
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 28),
         ),
@@ -26,7 +28,8 @@ Future<void> showRoundCompleteDialog(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              tr('צברת $score כוכבים ⭐', 'You earned $score stars ⭐'),
+              tr('צברת $score כוכבים ⭐', 'You earned $score stars ⭐',
+                  'Ai câștigat ${roCount(score, 'stea', 'stele')} ⭐'),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 22),
             ),
