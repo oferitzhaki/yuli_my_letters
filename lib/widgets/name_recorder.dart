@@ -3,7 +3,7 @@
 // On Android the microphone audio is collected straight into memory and
 // turned into a small WAV file. In the browser (iPhone/iPad via Safari)
 // the browser's own recorder is used instead (m4a on Safari, webm on
-// Chrome), because Safari can hang on the live-audio route.
+// Chrome), straight from the microphone - see blob_bytes_web.dart.
 
 import 'dart:async';
 import 'dart:convert';
@@ -51,7 +51,6 @@ class _NameRecorderState extends State<NameRecorder> {
   Timer? _autoStop;
   bool _starting = false;
   bool _recording = false;
-  String _webMime = 'audio/mp4';
   String? _url;
   String? _error;
 
@@ -65,6 +64,7 @@ class _NameRecorderState extends State<NameRecorder> {
   void dispose() {
     _autoStop?.cancel();
     _stream?.cancel();
+    if (kIsWeb) webCancelRecording();
     _recorder.dispose();
     _audio.dispose();
     super.dispose();
@@ -99,26 +99,19 @@ class _NameRecorderState extends State<NameRecorder> {
       }
       debugPrint('Record start failed: $e');
       try {
-        await _recorder.cancel();
+        if (kIsWeb) {
+          await webCancelRecording();
+        } else {
+          await _recorder.cancel();
+        }
       } catch (_) {}
     } finally {
       if (mounted) setState(() => _starting = false);
     }
   }
 
-  /// Browser: the built-in recorder. Safari makes m4a (AAC), Chrome webm.
-  Future<void> _startWeb() async {
-    var encoder = AudioEncoder.aacLc;
-    _webMime = 'audio/mp4';
-    if (!await _recorder.isEncoderSupported(encoder)) {
-      encoder = AudioEncoder.opus;
-      _webMime = 'audio/webm';
-    }
-    await _recorder.start(
-      RecordConfig(encoder: encoder, numChannels: 1),
-      path: '',
-    );
-  }
+  /// Browser: the browser's own recorder (see blob_bytes_web.dart).
+  Future<void> _startWeb() => webStartRecording();
 
   /// Android: raw samples into memory, wrapped as WAV when done.
   Future<void> _startStream() async {
@@ -140,21 +133,28 @@ class _NameRecorderState extends State<NameRecorder> {
     _autoStop?.cancel();
     if (!_recording) return;
     try {
-      final blobUrl = await _recorder.stop();
-      await _stream?.cancel();
-      _stream = null;
+      final Uint8List? webBytes;
+      if (kIsWeb) {
+        webBytes = await webStopRecording();
+      } else {
+        webBytes = null;
+        await _recorder.stop();
+        await _stream?.cancel();
+        _stream = null;
+      }
       setState(() => _recording = false);
 
       final RecordedName recorded;
       if (kIsWeb) {
-        final bytes = blobUrl == null ? null : await readBlobUrl(blobUrl);
+        final bytes = webBytes;
         // A few hundred bytes = nothing was really recorded.
         if (bytes == null || bytes.length < 1000) {
           setState(() => _error =
-              tr('ההקלטה קצרה מדי, נסו שוב', 'Too short, please try again'));
+              '${tr('ההקלטה קצרה מדי, נסו שוב', 'Too short, please try again')}'
+              ' (${bytes?.length ?? 0})');
           return;
         }
-        recorded = RecordedName(bytes, _webMime);
+        recorded = RecordedName(bytes, webRecordingMime);
       } else {
         // Less than a quarter of a second = nothing was really said.
         if (_pcm.length < _sampleRate ~/ 2) {

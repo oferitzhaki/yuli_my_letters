@@ -1,6 +1,14 @@
 // lib/widgets/blob_bytes_stub.dart
-// Outside the browser there are no "blob:" addresses (see blob_bytes_web.dart).
+// Outside the browser the record package is used (see name_recorder.dart),
+// so these are never called.
 
 import 'dart:typed_data';
 
-Future<Uint8List?> readBlobUrl(String url) async => null;
+String get webRecordingMime => 'audio/mp4';
+
+Future<void> webStartRecording() async =>
+    throw UnsupportedError('Browser only');
+
+Future<Uint8List?> webStopRecording() async => null;
+
+Future<void> webCancelRecording() async {}
